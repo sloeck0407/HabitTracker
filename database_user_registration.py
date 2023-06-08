@@ -37,23 +37,33 @@ def register():
     INSERT INTO users (username, email, password)
     VALUES (?, ?, ?)
     '''
-    cursor.execute(insert_data, (username, email, password))
     connection.commit()
 
-# User login
+    select_data = '''
+    SELECT * FROM users WHERE username = ? OR email = ?
+    '''
+
+    cursor.execute(select_data, (email, email))
+    user = cursor.fetchone()
+
+    if user and user[2] == email:
+        print("Seems like you already have an account. Try loging in!")
+    else:
+        print("Registration successful!")
+
 def login():
     """
-    Allows a user to login into their account to access their data
+    Allows a user to log in to their account to access their data
 
     Parameters:
     login_input (str): The user enters their username or email
     password (str): The user enters their password
 
     Returns:
-    If the password is correct: "login successful!"
-    If the password is incorrect: "invalid username/email or password"
+    If the password is correct: "Login successful!"
+    If the password is incorrect: "Invalid username/email or password"
     """
-    login_input = input("Enter your username or email: ")   
+    login_input = input("Enter your username or email: ")
     password = input("Enter your password: ")
 
     # Retrieve user information from the table
@@ -65,6 +75,8 @@ def login():
 
     if user and user[3] == password:  # user[3] is the password column
         print("Login successful!")
+        # Call a function to display the user's habits
+        display_habits(user[0])  # user[0] is the id column
     else:
         print("Invalid username/email or password.")
 
