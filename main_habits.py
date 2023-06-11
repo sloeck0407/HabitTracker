@@ -1,25 +1,38 @@
 from datetime import datetime
 import pandas as pd
-import sqlite3
-from habit_tool import break_habit
-from habit_tool import make_habit
 from tabulate import tabulate
-from database_user_registration import register
-from database_user_registration import login
+import sqlite3
+from database_user_registration import register, login
+from step_by_step_habits import habit_name, frequency, habit_type, display_habits
 
-habits_broken = [
-    break_habit("coffee", datetime(2023, 5, 24, 3, 51), cost_per_day=3, minutes_wasted=4)
-   
-]
+connection = sqlite3.connect("habit_tracker.db")
+cursor = connection.cursor()
 
-df = pd.DataFrame(habits_broken)
+create_table_user_data = '''
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT,
+    email TEXT,
+    password TEXT
+)
+'''
+cursor.execute(create_table_user_data)
 
-print(tabulate(df, headers='keys', tablefmt='psql'))
+while True:
+    print("1. Register")
+    print("2. Login")
+    print("3. Exit")
+    choice = input("Enter your choice: ")
 
-habits_made = [
-    make_habit("workout", "daily", datetime(2023, 1, 1, 12, 00), datetime.now(), status="not done")
-]
+    if choice == "1":
+        register()
+    elif choice == "2":
+        user_id = login()
+        if user_id is not None:
+            display_habits(user_id)
+    elif choice == "3":
+        break
 
-df_1 = pd.DataFrame(habits_made)
+display_habits(user_id)
 
-print(tabulate(df_1, headers='keys', tablefmt='psql'))
+connection.close()

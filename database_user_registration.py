@@ -37,6 +37,7 @@ def register():
     INSERT INTO users (username, email, password)
     VALUES (?, ?, ?)
     '''
+    cursor.execute(insert_data, (username, email, password))
     connection.commit()
 
     select_data = '''
@@ -73,12 +74,12 @@ def login():
     cursor.execute(select_query, (login_input, login_input))
     user = cursor.fetchone()
 
-    if user and user[3] == password:  # user[3] is the password column
+    if user and user[3] == password:
         print("Login successful!")
-        # Call a function to display the user's habits
-        display_habits(user[0])  # user[0] is the id column
+        return user[0]  # Return the user ID if login is successful
     else:
         print("Invalid username/email or password.")
+        return None  # Return None if login is unsuccessful
 
 # Main program loop
 while True:
