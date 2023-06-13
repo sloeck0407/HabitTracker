@@ -1,3 +1,4 @@
+from step_by_step_habits import display_habits
 import sqlite3
 
 # Connect to the SQLite database
@@ -76,24 +77,11 @@ def login():
 
     if user and user[3] == password:
         print("Login successful!")
-        return user[0]  # Return the user ID if login is successful
+        return display_habits(user[0])  # Return the user ID if login is successful
     else:
         print("Invalid username/email or password.")
         return None  # Return None if login is unsuccessful
 
-# Main program loop
-while True:
-    print("1. Register")
-    print("2. Login")
-    print("3. Exit")
-    choice = input("Enter your choice: ")
 
-    if choice == "1":
-        register()
-    elif choice == "2":
-        login()
-    elif choice == "3":
-        break
 
-# Close the database connection
-connection.close()
+

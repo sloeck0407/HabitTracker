@@ -44,14 +44,14 @@ def display_habits(user_id):
     else:
         # Print the table header
         print("{:<10} {:<20} {:<15} {:<15} {:<15}".format(
-            "Habit ID", "Name", "Frequency", "Start Date", "Status"
+            "Name", "Start Date", "Frequency","Streak", "Status"
         ))
         print("-" * 80)
 
         # Print each habit row
         for habit in habits:
             print("{:<10} {:<20} {:<15} {:<15} {:<15}".format(
-                habit[0], habit[2], habit[3], habit[4], habit[5]
+                habit[3], habit[3], habit[5], habit[9], habit[10]
             ))
 
         print("-" * 80)
@@ -229,8 +229,6 @@ def habit_type():
     elif choice == "2":
         create_habit()
 
-habit_name()
-frequency()
-habit_type()
+
 
 

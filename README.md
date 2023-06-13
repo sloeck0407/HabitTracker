@@ -1,4 +1,4 @@
-# HabitTracker# My Habit Tracker App
+# My Habit Tracker App
 
 This habit tracker will help you create habits (and brake habits) by letting you custumize each habit, making it either daily, weekly, monthly or yearly; and checking it off everytime you complete it. The longer you keep your habits, the bigger your streak will be!
 
