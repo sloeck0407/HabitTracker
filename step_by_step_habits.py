@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS habits (
 '''
 cursor.execute(create_table_habits)
 
-def display_habits(user_id):
+def display_habits(user_id, habit_id = None):
     """
     Displays a table with all the habits of the user
 
@@ -54,9 +54,10 @@ def display_habits(user_id):
 
         if choice == "1":
             print("Perfect!")
+            return habit_name_input
 
         elif choice == "2":
-            habit_name()
+            return habit_name()
 
     def frequency():
         """
@@ -88,15 +89,73 @@ def display_habits(user_id):
         print("1. Yes")
         print("2. No")
 
-        while True:
-            choice = input()
-            if choice == "1":
-                print("Perfect!")
+        choice = input()
+        if choice == "1":
+            print("Perfect!")
+            return frequency_input
                 
-            elif choice == "2":
-                frequency()
+        elif choice == "2":
+            return frequency()
 
-    def habit_type():
+    def break_habit():
+        """
+        Allows the user to choose the type of habit they wish to brake
+
+        Parameters:
+        habit_type (str): The name of the type for the habit
+
+        Returns:
+        none
+        """
+        print("You can choose one of the predifined typer or create your own!")
+        print("1. Time Wasting")
+        print("2. Money Wasting")
+        print("3. Unhealthy")
+        print("4. Other")
+        choice = input("Enter your choice:")
+
+        if choice == "1":
+            habit_type_input = "Time Wasting"
+        elif choice == "2":
+            habit_type_input = "Money Wasting"
+        elif choice == "3":
+            habit_type_input = "Unhealthy"
+        elif choice == "4":
+            habit_type_input = input("Write your own type!")
+
+        print("Your type is", habit_type_input, "is that correct?")
+        print("1. Yes")
+        print("2. No")
+
+        choice = input()
+        if choice == "1":
+            print("Perfect!")
+            return habit_type_input, user_id
+
+            print("Would you like to track how much money you save?")
+            print("1. Yes")
+            print("2. No")
+   
+            if choice == "1":
+                money_saved_input = input("How much money will you save? ")
+            elif choice == "2":
+                money_saved_input = None  # Set money_saved to None if the user chooses not to track it
+
+            print("Would you like to track how much time you save?")
+            print("1. Yes")
+            print("2. No")
+
+
+            if choice == "1":
+                time_saved_input = input("How much time will you save?(in minutes) " + "minutes")
+            elif choice == "2":
+                time_saved_input = None  # Set time_saved to None if the user chooses not to track it
+            return money_saved_input, time_saved_input
+
+        elif choice == "2":
+            return break_habit()
+
+    def create_habit():
         """
         Allows the user to choose the type of habit they wish to create
 
@@ -106,136 +165,44 @@ def display_habits(user_id):
         Returns:
         none
         """
-        def break_habit():
-            print("You can choose one of the predifined typer or create your own!")
-            print("1. Time Wasting")
-            print("2. Money Wasting")
-            print("3. Unhealthy")
-            print("4. Other")
-            choice = input("Enter your choice:")
-
-            if choice == "1":
-                habit_type_input = "Time Wasting"
-            elif choice == "2":
-                habit_type_input = "Money Wasting"
-            elif choice == "3":
-                habit_type_input = "Unhealthy"
-            elif choice == "4":
-                habit_type_input = input("Write your own type!")
-
-            print("Your type is", habit_type_input, "is that correct?")
-            print("1. Yes")
-            print("2. No")
-
-            while True:
-                choice = input()
-                if choice == "1":
-                    print("Perfect!")
-
-                    print("Would you like to track how much money you save?")
-                    print("1. Yes")
-                    print("2. No")
-
-                    while True: 
-                        choice = input("Enter your choice: ")
-                        if choice in ["1", "2"]:
-                            break
-                        else:
-                            print("Invalid choice. Please enter a valid option.")
-                        
-                    if choice == "1":
-                        money_saved_input = input("How much money will you save? ")
-                    elif choice == "2":
-                        money_saved_input = None  # Set money_saved to None if the user chooses not to track it
-
-                    print("Would you like to track how much time you save?")
-                    print("1. Yes")
-                    print("2. No")
-
-                    while True:
-                        choice = input("Enter your choice: ")
-                        if choice in ["1", "2"]:
-                            break
-                        else:
-                            print("Invalid choice. Please enter a valid option.")
-                        
-                        if choice == "1":
-                            time_saved_input = input("How much time will you save?(in minutes) " + "minutes")
-                        elif choice == "2":
-                            time_saved_input = None  # Set time_saved to None if the user chooses not to track it
-
-                elif choice == "2":
-                    habit_type()
-
-        def create_habit():
-            print("You can choose one of the predifined typer or create your own!")
-            print("1. Health and Fitness")
-            print("2. Living and Organization")
-            print("3. Learning and Personal Development")
-            print("4. Relationships and Social Interactions")
-            print("5. Mental and Emotional Well-Being")
-            print("6. Environmental Sustainability")
-            print("7. Other")
-            choice = input("Enter your choice:")
-
-            if choice == "1":
-                habit_type = "Health and Fitness"
-            elif choice == "2":
-                habit_type = "Living and Organization"
-            elif choice == "3":
-                habit_type = "Learning and Personal Development"
-            elif choice == "4":
-                habit_type = "Relationships and Social Interactions"
-            elif choice == "5":
-                habit_type = "Mental and Emotional Well-Being"
-            elif choice == "6":
-                habit_type = "Environmental Sustainability"
-            elif choice == "7":
-                habit_type = input("Write your own type!")
-            
-            print("Your type is", habit_type, "is that correct?")
-            print("1. Yes")
-            print("2. No")
-
-        while True:
-            choice = input()
-            if choice == "1":
-                print("Perfect!")
-                insert_data = '''
-                INSERT INTO habits (habit_type, habit_id)
-                VALUES (?, ?)
-                '''
-                cursor.execute(insert_data, (habit_type_input, habit_id))
-                connection.commit()
-
-                money_saved = None
-                time_saved = None
-
-                insert_data = '''
-                INSERT INTO habits (money_saved, time_saved, habit_id)
-                VALUES (?, ?, ?)
-                '''
-                cursor.execute(insert_data, (money_saved, time_saved, habit_id,))
-                connection.commit()
-
-            elif choice == "2":
-                habit_type()
-
-        print("Are you looking to break or create a habit?")
-        print("1. Break a habit")
-        print("2. Create a habit")
-
-        while True:
-            choice = input("Enter your choice: ")
-            if choice in ["1", "2"]:
-                break
-            else:
-                print("Invalid choice. Please enter a valid option.")
+        print("You can choose one of the predifined typer or create your own!")
+        print("1. Health and Fitness")
+        print("2. Living and Organization")
+        print("3. Learning and Personal Development")
+        print("4. Relationships and Social Interactions")
+        print("5. Mental and Emotional Well-Being")
+        print("6. Environmental Sustainability")
+        print("7. Other")
+        choice = input("Enter your choice:")
 
         if choice == "1":
-            break_habit()
+            habit_type_input = "Health and Fitness"
         elif choice == "2":
-            create_habit()
+            habit_type_input = "Living and Organization"
+        elif choice == "3":
+            habit_type_input = "Learning and Personal Development"
+        elif choice == "4":
+            habit_type_input = "Relationships and Social Interactions"
+        elif choice == "5":
+            habit_type_input = "Mental and Emotional Well-Being"
+        elif choice == "6":
+            habit_type_input = "Environmental Sustainability"
+        elif choice == "7":
+            habit_type_input = input("Write your own type!")
+            
+        print("Your type is", habit_type_input, "is that correct?")
+        print("1. Yes")
+        print("2. No")
+
+        choice = input()
+        if choice == "1":
+            money_saved_input = None
+            time_saved_input = None
+            print("Perfect!")
+            return habit_type_input, money_saved_input, time_saved_input, user_id
+
+        elif choice == "2":
+            return create_habit()
 
     def status(habit_id):
         """
@@ -261,19 +228,18 @@ def display_habits(user_id):
         print("1. Yes")
         print("2. No")
 
-        while True:
-            choice = input()
-            if choice == "1":
-                print("Perfect!")
-                insert_data = '''
-                INSERT INTO habits (status, habit_id)
-                VALUES (?, ?)
-                '''
-                cursor.execute(insert_data, (status_input, habit_id,))
-                connection.commit()
+        choice = input()
+        if choice == "1":
+            print("Perfect!")
+            insert_data = '''
+            INSERT INTO habits (status, habit_id)
+            VALUES (?, ?)
+            '''
+            cursor.execute(insert_data, (status_input, habit_id,))
+            connection.commit()
 
-            elif choice == "2":
-                status()
+        elif choice == "2":
+            status()
 
     def get_time_limit(frequency):
         """
@@ -373,6 +339,26 @@ def display_habits(user_id):
         else:
             None
 
+    def save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
+        """
+        Saves the habit information into the table of habits
+
+        Parameters:
+        habit_name_input (str): The name of the habit
+        frequency_input (str): The frequency of the habit
+        habit_type_input (str): The type of the habit
+
+        Returns:
+        none
+        """
+        # Insert the habit into the habits table
+        insert_data = '''
+        INSERT INTO habits (user_id, habit_name, frequency, habit_type, money_saved, time_saved, status, start_date, last_done, streak)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        cursor.execute(insert_data, (user_id, habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, None, None, None, None))
+        connection.commit()
+
     select_query = '''
     SELECT * FROM habits WHERE user_id = ?
     '''
@@ -386,33 +372,47 @@ def display_habits(user_id):
         choice = input("Enter your choice: ")
 
         if choice == "1":
-            habit_name()
-            frequency()
-            habit_type()
-            status(habit_id=habit_id)
-            start_date(habit_id=habit_id)
-            last_done(habit_id=habit_id)
-            streak(habit_id=habit_id, frequency=frequency_input)
-
-            insert_data = '''
-            INSERT INTO habits (habit_name, frequency, habit_type, money_saved, time_saved, 
-            status, start_date, last_done, streak, user_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            '''
-            cursor.execute(insert_data, (habit_name_input, frequency_input, habit_type_input, 
-            money_saved_input, time_saved_input,status_input, start_date_input, last_done_input, 
-            streak, user_id,))
-            connection.commit()
+            habit_name_input = habit_name()
+            frequency_input = frequency()
+            print("Are you looking to break or create a habit?")
+            print("1. Break a habit")
+            print("2. Create a habit")
+            choice = input("Enter your choice: ")
+            if choice == "1":
+    	        habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
+            elif choice == "2":
+                habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
 
             print("Your habit has been created!")
             print("Here's a summary of your habit:")
             print("Habit name:", habit_name_input)
             print("Frequency:", frequency_input)
             print("Habit type:", habit_type_input)
-            print("Status:", status_input)
-            print("Start date:", start_date_input)
-            print("Last done:", last_done_input)
-            print("Streak:", streak)
+
+            # Save the habit information into the table of habits
+            save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id)
+
+            select_query = '''
+            SELECT * FROM habits WHERE habit_id = ?
+            '''
+            cursor.execute(select_query, (habit_id,))
+            habits = cursor.fetchall()
+
+            # Print the table header
+            print("{:<10} {:<20} {:<15} {:<20} {:<10} {:<10} {:<20} {:<15} {:<15}".format(
+                "Name", "Start Date", "Frequency", "Habit Type", "Money Saved", "Time Saved", 
+                "Last Done", "Streak", "Status"
+            ))
+            print("-" * 120)
+
+            # Print the table rows
+            for habit in habits:
+                print("{:<10} {:<20} {:<15} {:<20} {:<10} {:<10} {:<20} {:<15} {:<15}".format(
+                    habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
+                    habit[8], habit[9], habit[10]
+                ))
+            print("-" * 120)
+
         elif choice == "2":
             exit()
     else:
