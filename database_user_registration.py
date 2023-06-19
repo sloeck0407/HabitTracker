@@ -1,4 +1,3 @@
-from step_by_step_habits import display_habits
 import sqlite3
 
 # Connect to the SQLite database
@@ -8,7 +7,7 @@ cursor = connection.cursor()
 # Create the users table if it doesn't exist
 create_table_user_data = '''
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT,
     email TEXT,
     password TEXT
@@ -33,14 +32,6 @@ def register():
     email = input("Enter an email address: ")
     password = input("Enter a password: ")
 
-    # Insert user information into the table
-    insert_data = '''
-    INSERT INTO users (username, email, password)
-    VALUES (?, ?, ?)
-    '''
-    cursor.execute(insert_data, (username, email, password))
-    connection.commit()
-
     select_data = '''
     SELECT * FROM users WHERE username = ? OR email = ?
     '''
@@ -50,8 +41,20 @@ def register():
 
     if user and user[2] == email:
         print("Seems like you already have an account. Try loging in!")
+        return
     else:
+        # Insert user information into the table
+        insert_data = '''
+        INSERT INTO users (username, email, password)
+        VALUES (?, ?, ?)
+        '''
+        cursor.execute(insert_data, (username, email, password))
+        connection.commit()
+
+        user_id = cursor.lastrowid
+
         print("Registration successful!")
+        return
 
 def login():
     """
@@ -77,10 +80,25 @@ def login():
 
     if user and user[3] == password:
         print("Login successful!")
-        return display_habits(user[0])  # Return the user ID if login is successful
+        user_id = user[0]
+        return user_id
     else:
         print("Invalid username/email or password.")
-        return None  # Return None if login is unsuccessful
+        print("Do you want to register instead?")
+        print("1. Register")
+        print("2. Try logging in again")
+        print("3. Exit")
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            register()
+        elif choice == "2":
+            login()
+        elif choice == "3":
+            exit()
+        else:
+            print("Invalid choice. Exiting...")
+            exit()
 
 
 
