@@ -51,6 +51,8 @@ def register():
         cursor.execute(insert_data, (username, email, password))
         connection.commit()
 
+        user_id = cursor.lastrowid
+
         print("Registration successful!")
         return
 
@@ -78,6 +80,8 @@ def login():
 
     if user and user[3] == password:
         print("Login successful!")
+        user_id = user[0]
+        return user_id
     else:
         print("Invalid username/email or password.")
         print("Do you want to register instead?")

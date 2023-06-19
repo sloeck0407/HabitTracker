@@ -46,8 +46,7 @@ while True:
     if choice == "1":
         register()
     elif choice == "2":
-        login()
-        user_id = cursor.lastrowid
+        user_id = login()
         if user_id is not None:
             display_habits(user_id)  # Call the function to display habits
     elif choice == "3":
