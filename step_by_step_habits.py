@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS habits (
 '''
 cursor.execute(create_table_habits)
 
-def display_habits(user_id):
+def create_habits(user_id):
     """
     Displays a table with all the habits of the user
 
@@ -340,7 +340,106 @@ def display_habits(user_id):
             connection.commit()
         else:
             None
+        
+    def save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
+        """
+        Saves the habit information into the table of habits
 
+        Parameters:
+        habit_name_input (str): The name of the habit
+        frequency_input (str): The frequency of the habit
+        habit_type_input (str): The type of the habit
+
+        Returns:
+        none
+        """
+        # Insert the habit into the habits table
+        insert_data = '''
+        INSERT INTO habits (user_id, habit_name, frequency, habit_type, money_saved, time_saved, status, start_date, last_done, streak)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        cursor.execute(insert_data, (user_id, habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, None, None, None, None))
+        connection.commit()
+
+
+    select_query = '''
+    SELECT * FROM habits WHERE user_id = ?
+    '''
+    cursor.execute(select_query, (user_id,))
+    habits = cursor.fetchall()
+
+    habit_name_input = habit_name()
+    frequency_input = frequency()
+    print("Are you looking to break or create a habit?")
+    print("1. Break a habit")
+    print("2. Create a habit")
+    choice = input("Enter your choice: ")
+    if choice == "1":
+    	habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
+    elif choice == "2":
+        habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
+
+    print("Your habit has been created!")
+    print("Here's a summary of your habit:")
+    print("Habit name:", habit_name_input)
+    print("Frequency:", frequency_input)
+    print("Habit type:", habit_type_input)
+
+    # Save the habit information into the table of habits
+    save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
+    time_saved_input, user_id)
+
+def display_habits(user_id):
+    """
+    Displays a table with all the habits of the user
+
+    Parameters:
+    user_id (int): The ID of the user
+
+    Returns:
+    None
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE user_id = ?
+    '''
+    cursor.execute(select_query, (user_id,))
+    habits = cursor.fetchall()
+
+    # Create a DataFrame from the habits data
+    columns = ["Name", "Start Date", "Frequency", "Habit Type", "Money Saved", 
+    "Time Saved", "Last Done", "Streak", "Status"]
+    habit_data = []
+    for habit in habits:
+        # Check for None values and substitute with an empty string or placeholder
+        habit_name = habit[2] if habit[2] is not None else ""
+        start_date = habit[3] if habit[3] is not None else ""
+        frequency = habit[4] if habit[4] is not None else ""
+        habit_type = habit[5] if habit[5] is not None else ""
+        money_saved = habit[6] if habit[6] is not None else ""
+        time_saved = habit[7] if habit[7] is not None else ""
+        last_done = habit[8] if habit[8] is not None else ""
+        streak = habit[9] if habit[9] is not None else ""
+        status = habit[10] if habit[10] is not None else ""
+
+        habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
+        habit[8], habit[9], habit[10]])
+
+    habit_df = pd.DataFrame(habit_data, columns=columns)
+
+    # Display the DataFrame as a formatted table
+    table = tabulate(habit_df, headers='keys', tablefmt='psql')
+    print(table)
+
+def edit_habit(user_id):
+    """
+    Allows the user to edit their habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
     def save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
         """
         Saves the habit information into the table of habits
@@ -366,136 +465,124 @@ def display_habits(user_id):
     '''
     cursor.execute(select_query, (user_id,))
     habits = cursor.fetchall()
+    
+    print("Which habit would you like to edit?")
+    for habit in habits:
+        print(habit[2])
+    habit_name_input = input("Enter the name of the habit: ")
+    print("What would you like to edit?")
+    print("1. Name")
+    print("2. Frequency")
+    print("3. Habit Type")
+    print("4. Money Saved")
+    print("5. Time Saved")
+    print("6. Exit")
+    choice = input("Enter your choice: ")
 
-    if not habits:
-        print("You don't have any habits yet.")
-        print("1. Create a habit")
-        print("2. Exit")
-        choice = input("Enter your choice: ")
+    if choice == "1":
+        habit_name_input = habit_name()
+        print("Your habit has been updated!")
+        print("Here's a summary of your habit:")
+        print("Habit name:", habit_name_input)
+        print("Frequency:", frequency_input)
+        print("Habit type:", habit_type_input)
 
-        if choice == "1":
-            habit_name_input = habit_name()
-            frequency_input = frequency()
-            print("Are you looking to break or create a habit?")
-            print("1. Break a habit")
-            print("2. Create a habit")
-            choice = input("Enter your choice: ")
-            if choice == "1":
-    	        habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
-            elif choice == "2":
-                habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
+        # Save the habit information into the table of habits
+        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
+        time_saved_input, user_id)
 
-            print("Your habit has been created!")
-            print("Here's a summary of your habit:")
-            print("Habit name:", habit_name_input)
-            print("Frequency:", frequency_input)
-            print("Habit type:", habit_type_input)
-
-            # Save the habit information into the table of habits
-            save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
-            time_saved_input, user_id)
-            
-            select_query = '''
-            SELECT * FROM habits WHERE user_id = ?
-            '''
-            cursor.execute(select_query, (user_id,))
-            habits = cursor.fetchall()
-
-            # Create a DataFrame from the habits data
-            columns = ["Name", "Start Date", "Frequency", "Habit Type", "Money Saved", 
-            "Time Saved", "Last Done", "Streak", "Status"]
-            habit_data = []
-            for habit in habits:
-                # Check for None values and substitute with an empty string or placeholder
-                habit_name = habit[2] if habit[2] is not None else ""
-                start_date = habit[3] if habit[3] is not None else ""
-                frequency = habit[4] if habit[4] is not None else ""
-                habit_type = habit[5] if habit[5] is not None else ""
-                money_saved = habit[6] if habit[6] is not None else ""
-                time_saved = habit[7] if habit[7] is not None else ""
-                last_done = habit[8] if habit[8] is not None else ""
-                streak = habit[9] if habit[9] is not None else ""
-                status = habit[10] if habit[10] is not None else ""
-
-                habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
-                habit[8], habit[9], habit[10]])
-            habit_df = pd.DataFrame(habit_data, columns=columns)
-
-            # Display the DataFrame as a formatted table
-            table = tabulate(habit_df, headers='keys', tablefmt='psql')
-            print(table)
-
-        elif choice == "2":
-            exit()
-    else:
         select_query = '''
         SELECT * FROM habits WHERE user_id = ?
         '''
         cursor.execute(select_query, (user_id,))
         habits = cursor.fetchall()
+        return habits
+    elif choice == "2":
+        frequency_input = frequency()
+        print("Your habit has been updated!")
+        print("Here's a summary of your habit:")
+        print("Habit name:", habit_name_input)
+        print("Frequency:", frequency_input)
+        print("Habit type:", habit_type_input)
 
-        # Create a DataFrame from the habits data
-        columns = ["Name", "Start Date", "Frequency", "Habit Type", "Money Saved", 
-        "Time Saved", "Last Done", "Streak", "Status"]
-        habit_data = []
-        for habit in habits:
-            # Check for None values and substitute with an empty string or placeholder
-            habit_name = habit[2] if habit[2] is not None else ""
-            start_date = habit[3] if habit[3] is not None else ""
-            frequency = habit[4] if habit[4] is not None else ""
-            habit_type = habit[5] if habit[5] is not None else ""
-            money_saved = habit[6] if habit[6] is not None else ""
-            time_saved = habit[7] if habit[7] is not None else ""
-            last_done = habit[8] if habit[8] is not None else ""
-            streak = habit[9] if habit[9] is not None else ""
-            status = habit[10] if habit[10] is not None else ""
-
-            habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
-            habit[8], habit[9], habit[10]])
-        habit_df = pd.DataFrame(habit_data, columns=columns)
-
-        # Display the DataFrame as a formatted table
-        table = tabulate(habit_df, headers='keys', tablefmt='psql')
-        print(table)
-
-"""        print("What would you like to do?")
-        print("1. Create a habit")
-        print("2. Edit a habit")
-        print("3. Delete a habit")
-        print("4. View habit statistics")
-        print("5. Mark habit as done")
-        print("6. Exit")
-
+        # Save the habit information into the table of habits
+        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
+        time_saved_input, user_id)
+                
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ?
+        '''
+        cursor.execute(select_query, (user_id,))
+        habits = cursor.fetchall()
+        return habits
+    elif choice == "3":
+        print("Are you looking to break or create a habit?")
+        print("1. Break a habit")
+        print("2. Create a habit")
         choice = input("Enter your choice: ")
-
         if choice == "1":
-            habit_name_input = habit_name()
-            frequency_input = frequency()
-            print("Are you looking to break or create a habit?")
-            print("1. Break a habit")
-            print("2. Create a habit")
-            choice = input("Enter your choice: ")
-            if choice == "1":
-    	        habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
-            elif choice == "2":
-                habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
+            habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
+        elif choice == "2":
+            habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
+        print("Your habit has been updated!")
+        print("Here's a summary of your habit:")
+        print("Habit name:", habit_name_input)
+        print("Frequency:", frequency_input)
+        print("Habit type:", habit_type_input)
 
-            print("Your habit has been created!")
-            print("Here's a summary of your habit:")
-            print("Habit name:", habit_name_input)
-            print("Frequency:", frequency_input)
-            print("Habit type:", habit_type_input)
+        # Save the habit information into the table of habits
+        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
+        time_saved_input, user_id)
 
-            # Save the habit information into the table of habits
-            save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
-            time_saved_input, user_id)
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ?
+        '''
+        cursor.execute(select_query, (user_id,))
+        habits = cursor.fetchall()
+        return habits
+    elif choice == "4":
+        money_saved_input = input("How much money will you save? ")
+        print("Your habit has been updated!")
+        print("Here's a summary of your habit:")
+        print("Habit name:", habit_name_input)
+        print("Habit type:", habit_type_input)
+        print("Money saved:", money_saved_input)
+        print("Time saved:", time_saved_input)
+
+        # Save the habit information into the table of habits
+        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
+        time_saved_input, user_id)
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ?
+        '''
+        cursor.execute(select_query, (user_id,))
+        habits = cursor.fetchall()
+        return habits
+
+    elif choice == "5":
+        time_saved_input = input("How much time will you save?(in minutes) ")
+        print("Your habit has been updated!")
+        print("Here's a summary of your habit:")
+        print("Habit name:", habit_name_input)
+        print("Habit type:", habit_type_input)
+        print("Money saved:", money_saved_input)
+        print("Time saved:", time_saved_input)
+
+        # Save the habit information into the table of habits
+        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
+        time_saved_input, user_id)
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ?
+        '''
+        cursor.execute(select_query, (user_id,))
+        habits = cursor.fetchall()
+        return habits
             
-            select_query = '''
-            SELECT * FROM habits WHERE user_id = ?
-            '''
-            cursor.execute(select_query, (user_id,))
-            habits = cursor.fetchall()
-            return habits
+    elif choice == "6":
+        exit()        
+"""
         elif choice == "2":
             print("Which habit would you like to edit?")
             for habit in habits:

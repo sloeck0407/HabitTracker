@@ -54,7 +54,6 @@ def register():
         user_id = cursor.lastrowid
 
         print("Registration successful!")
-        return
 
 def login():
     """
