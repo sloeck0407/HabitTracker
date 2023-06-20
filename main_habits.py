@@ -3,7 +3,7 @@ import pandas as pd
 from tabulate import tabulate
 import sqlite3
 from database_user_registration import register, login
-from step_by_step_habits import display_habits
+from step_by_step_habits import create_habits, display_habits, edit_habit, what_to_do_now
 
 connection = sqlite3.connect("habit_tracker.db")
 cursor = connection.cursor()
@@ -46,9 +46,30 @@ while True:
     if choice == "1":
         register()
     elif choice == "2":
-        user_id = login()
+        user_id = login()                
         if user_id is not None:
-            display_habits(user_id)  # Call the function to display habits
+            select_query = '''
+            SELECT * FROM habits WHERE user_id = ?
+            '''
+            cursor.execute(select_query, (user_id,))
+            habits = cursor.fetchall()
+            if not habits:
+                print("You don't have any habits yet.")
+                print("1. Create a habit")
+                print("2. Exit")
+                choice = input("Enter your choice: ")
+
+                if choice == "1":
+                    create_habits(user_id)
+                    display_habits(user_id)  # Call the function to display habits
+                elif choice == "2":
+                    break
+                else:
+                    print("Invalid choice. Try again.")
+            else:
+                display_habits(user_id) 
+
+        what_to_do_now(user_id)
     elif choice == "3":
         break
     else:
