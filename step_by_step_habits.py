@@ -50,6 +50,29 @@ def habit_name():
     elif choice == "2":
         return habit_name()
 
+def update_name(habit_id):
+    """
+    Allows the user to update the name of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    habit_name_input = input("Enter the new name for the habit: ")
+
+    # Update the habit name in the habits table
+    update_query = '''
+    UPDATE habits SET habit_name = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (habit_name_input, habit_id,))
+    connection.commit()
+
+    print("Habit name has been updated successfully!")
+    return habit_name_input
+
 def frequency():
     """
     Allows the user to select the frequency with which they wish to maintain the habit
@@ -60,7 +83,7 @@ def frequency():
     Returns:
     none
     """
-    print("Select habit frequency:")
+    print("Select habit frequency: ")
     print("1. Daily")
     print("2. Weekly")
     print("3. Monthly")
@@ -87,6 +110,43 @@ def frequency():
                 
     elif choice == "2":
         return frequency()
+
+def update_frequency(habit_id):
+    """
+    Allows the user to update the frequency of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    print("Select a new habit frequency: ")
+    print("1. Daily")
+    print("2. Weekly")
+    print("3. Monthly")
+    print("4. Yearly")
+    frequency_input = input("Enter your choice: ")
+
+    if frequency_input == "1":
+        frequency_input = "Daily"
+    elif frequency_input == "2":
+        frequency_input = "Weekly"
+    elif frequency_input == "3":
+        frequency_input = "Monthly"
+    elif frequency_input == "4":
+        frequency_input = "Yearly"
+
+    # Update the frequency in the habits table
+    update_query = '''
+    UPDATE habits SET frequency = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (frequency_input, habit_id,))
+    connection.commit()
+
+    print("Habit frequency has been updated successfully!")
+    return frequency_input
 
 def break_habit():
     """
@@ -146,6 +206,43 @@ def break_habit():
     elif choice == "2":
         return break_habit()
 
+def update_break_habit(habit_id):
+    """
+    Allows the user to update the type of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    print("Select a new habit type: ")
+    print("1. Time Wasting")
+    print("2. Money Wasting")
+    print("3. Unhealthy")
+    print("4. Other")
+    choice = input("Enter your choice:")
+
+    if choice == "1":
+        habit_type_input = "Time Wasting"
+    elif choice == "2":
+        habit_type_input = "Money Wasting"
+    elif choice == "3":
+        habit_type_input = "Unhealthy"
+    elif choice == "4":
+        habit_type_input = input("Write your own type!")
+
+    # Update the habit type in the habits table
+    update_query = '''
+    UPDATE habits SET habit_type = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (habit_type_input, habit_id,))
+    connection.commit()
+
+    print("Habit type has been updated successfully!")
+    return habit_type_input
+
 def create_habit():
     """
     Allows the user to choose the type of habit they wish to create
@@ -194,6 +291,98 @@ def create_habit():
 
     elif choice == "2":
         return create_habit()
+
+def update_create_habit(habit_id):
+    """
+    Allows the user to update the type of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    print("Select a new habit type: ")
+    print("1. Health and Fitness")
+    print("2. Living and Organization")
+    print("3. Learning and Personal Development")
+    print("4. Relationships and Social Interactions")
+    print("5. Mental and Emotional Well-Being")
+    print("6. Environmental Sustainability")
+    print("7. Other")
+    choice = input("Enter your choice:")
+
+    if choice == "1":
+        habit_type_input = "Health and Fitness"
+    elif choice == "2":
+        habit_type_input = "Living and Organization"
+    elif choice == "3":
+        habit_type_input = "Learning and Personal Development"
+    elif choice == "4":
+        habit_type_input = "Relationships and Social Interactions"
+    elif choice == "5":
+        habit_type_input = "Mental and Emotional Well-Being"
+    elif choice == "6":
+        habit_type_input = "Environmental Sustainability"
+    elif choice == "7":
+        habit_type_input = input("Write your own type!")
+
+    # Update the habit type in the habits table
+    update_query = '''
+    UPDATE habits SET habit_type = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (habit_type_input, habit_id,))
+    connection.commit()
+
+    print("Habit type has been updated successfully!")
+    return habit_type_input
+
+def update_money_saved(habit_id):
+    """
+    Allows the user to update the money saved of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    money_saved_input = input("How much money will you save? ")
+
+    # Update the money saved in the habits table
+    update_query = '''
+    UPDATE habits SET money_saved = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (money_saved_input, habit_id,))
+    connection.commit()
+
+    print("Money saved has been updated successfully!")
+    return money_saved_input
+
+def update_time_saved(habit_id):
+    """
+    Allows the user to update the time saved of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    time_saved_input = input("How much time will you save?(in minutes) ")
+
+    # Update the time saved in the habits table
+    update_query = '''
+    UPDATE habits SET time_saved = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_query, (time_saved_input, habit_id,))
+    connection.commit()
+
+    print("Time saved has been updated successfully!")
+    return time_saved_input
 
 def status(habit_id):
     """
@@ -447,11 +636,23 @@ def edit_habit(user_id):
     cursor.execute(select_query, (user_id,))
     habits = cursor.fetchall()
     
-    print("Which habit would you like to edit?")
-    for habit in habits:
-        print(habit[2])
-    habit_name_input = input("Enter the name of the habit: ")
-    print("What would you like to edit?")
+    for index, habit in enumerate(habits):
+        print(f"{index+1}. {habit[2]}")
+
+    habit_choice = int(input("Which habit would you like to edit? "))
+    if habit_choice < 1 or habit_choice > len(habits):
+        print("Invalid habit choice.")
+    else:
+        selected_habit = habits[habit_choice-1]
+        habit_id = selected_habit[0]
+        habit_name = selected_habit[2]
+        frequency = selected_habit[4]
+        habit_type = selected_habit[5]
+        money_saved = selected_habit[6]
+        time_saved = selected_habit[7]
+        last_done = selected_habit[8]
+
+    print("What would you like to edit? ")
     print("1. Name")
     print("2. Frequency")
     print("3. Habit Type")
@@ -461,83 +662,98 @@ def edit_habit(user_id):
     choice = input("Enter your choice: ")
 
     if choice == "1":
-        habit_name_input = habit_name()
+        habit_name_input = update_name(habit_id)
         print("Your habit has been updated!")
         print("Here's a summary of your habit:")
         print("Habit name:", habit_name_input)
-        print("Frequency:", frequency_input)
-        print("Habit type:", habit_type_input)
+        print("Frequency:", frequency)
+        print("Habit type:", habit_type)
 
-        # Save the habit information into the table of habits
-        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-        time_saved_input, user_id)
+        # Update the habit information into the table of habits
+        update_data = '''
+        UPDATE habits SET habit_name = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_data, (habit_name_input, habit_id,))
+        connection.commit()
 
         select_query = '''
-        SELECT * FROM habits WHERE user_id = ?
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
         '''
-        cursor.execute(select_query, (user_id,))
+        cursor.execute(select_query, (user_id, habit_id,))
         habits = cursor.fetchall()
         return habits
+
     elif choice == "2":
-        frequency_input = frequency()
+        frequency_input = update_frequency(habit_id)
         print("Your habit has been updated!")
         print("Here's a summary of your habit:")
-        print("Habit name:", habit_name_input)
+        print("Habit name:", habit_name)
         print("Frequency:", frequency_input)
-        print("Habit type:", habit_type_input)
+        print("Habit type:", habit_type)
 
-        # Save the habit information into the table of habits
-        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
-        time_saved_input, user_id)
-                
-        select_query = '''
-        SELECT * FROM habits WHERE user_id = ?
+        # Update the habit information into the table of habits
+        update_data = '''
+        UPDATE habits SET frequency = ? WHERE habit_id = ?
         '''
-        cursor.execute(select_query, (user_id,))
+        cursor.execute(update_data, (frequency_input, habit_id,))
+        connection.commit()
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
+        '''
+        cursor.execute(select_query, (user_id, habit_id,))
         habits = cursor.fetchall()
         return habits
+
     elif choice == "3":
         print("Are you looking to break or create a habit?")
         print("1. Break a habit")
         print("2. Create a habit")
         choice = input("Enter your choice: ")
         if choice == "1":
-            habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
+            habit_type_input = update_break_habit(habit_id)
         elif choice == "2":
-            habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
+            habit_type_input = update_create_habit(habit_id)
         print("Your habit has been updated!")
         print("Here's a summary of your habit:")
-        print("Habit name:", habit_name_input)
-        print("Frequency:", frequency_input)
+        print("Habit name:", habit_name)
+        print("Frequency:", frequency)
         print("Habit type:", habit_type_input)
 
-        # Save the habit information into the table of habits
-        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-        time_saved_input, user_id)
+        # Update the habit information into the table of habits
+        update_data = '''
+        UPDATE habits SET habit_type = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_data, (habit_type_input, habit_id,))
+        connection.commit()
 
         select_query = '''
-        SELECT * FROM habits WHERE user_id = ?
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
         '''
-        cursor.execute(select_query, (user_id,))
+        cursor.execute(select_query, (user_id, habit_id,))
         habits = cursor.fetchall()
         return habits
+
     elif choice == "4":
         money_saved_input = input("How much money will you save? ")
         print("Your habit has been updated!")
         print("Here's a summary of your habit:")
-        print("Habit name:", habit_name_input)
-        print("Habit type:", habit_type_input)
+        print("Habit name:", habit_name)
+        print("Habit type:", habit_type)
         print("Money saved:", money_saved_input)
-        print("Time saved:", time_saved_input)
+        print("Time saved:", time_saved)
 
-        # Save the habit information into the table of habits
-        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-        time_saved_input, user_id)
+        # Update the habit information into the table of habits
+        update_data = '''
+        UPDATE habits SET money_saved = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_data, (money_saved_input, habit_id,))
+        connection.commit()
 
         select_query = '''
-        SELECT * FROM habits WHERE user_id = ?
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
         '''
-        cursor.execute(select_query, (user_id,))
+        cursor.execute(select_query, (user_id, habit_id,))
         habits = cursor.fetchall()
         return habits
 
@@ -545,24 +761,97 @@ def edit_habit(user_id):
         time_saved_input = input("How much time will you save?(in minutes) ")
         print("Your habit has been updated!")
         print("Here's a summary of your habit:")
-        print("Habit name:", habit_name_input)
-        print("Habit type:", habit_type_input)
-        print("Money saved:", money_saved_input)
+        print("Habit name:", habit_name)
+        print("Habit type:", habit_type)
+        print("Money saved:", money_saved)
         print("Time saved:", time_saved_input)
 
-        # Save the habit information into the table of habits
-        save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-        time_saved_input, user_id)
+        # Update the habit information into the table of habits
+        update_data = '''
+        UPDATE habits SET time_saved = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_data, (time_saved_input, habit_id,))
+        connection.commit()
 
         select_query = '''
-        SELECT * FROM habits WHERE user_id = ?
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
         '''
-        cursor.execute(select_query, (user_id,))
+        cursor.execute(select_query, (user_id, habit_id,))
         habits = cursor.fetchall()
         return habits
             
     elif choice == "6":
         exit()   
+
+def delete_habit(user_id):
+    """
+    Allows the user to delete their habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    None
+    """
+
+    select_query = '''
+    SELECT * FROM habits WHERE user_id = ?
+    '''
+    cursor.execute(select_query, (user_id,))
+    habits = cursor.fetchall()
+    
+    for index, habit in enumerate(habits):
+        print(f"{index+1}. {habit[2]}")
+
+    habit_choice = int(input("Which habit would you like to delete? "))
+    if habit_choice < 1 or habit_choice > len(habits):
+        print("Invalid habit choice.")
+    else:
+        selected_habit = habits[habit_choice-1]
+        habit_id = selected_habit[0]
+        habit_name = selected_habit[2]
+        frequency = selected_habit[4]
+        habit_type = selected_habit[5]
+        money_saved = selected_habit[6]
+        time_saved = selected_habit[7]
+        last_done = selected_habit[8]
+
+    print("Are you sure you want to delete this habit?")
+    print("1. Yes")
+    print("2. No")
+    choice = input("Enter your choice: ")
+
+    if choice == "1":
+        print("Your habit has been deleted!")
+
+        # Delete the habit information from the table of habits
+        delete_data = '''
+        DELETE FROM habits WHERE habit_id = ?
+        '''
+        cursor.execute(delete_data, (habit_id,))
+        connection.commit()
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ? AND habit_id = ?
+        '''
+        cursor.execute(select_query, (user_id, habit_id,))
+        habits = cursor.fetchall()
+        return habits
+
+    elif choice == "2":
+        exit()
+
+def statistics(user_id):
+    """
+    Allows the user to view statistics about their habits
+
+    Parameters:
+    user_id (int): The ID of the user
+
+    Returns:
+    None
+    """
+    print("What would you like to view statistics for?")
 
 def what_to_do_now (user_id):
     """
@@ -592,6 +881,12 @@ def what_to_do_now (user_id):
 
         if choice == "1":
             create_habits(user_id)
+            display_habits(user_id)
+        elif choice == "2":
+            edit_habit(user_id)
+            display_habits(user_id)
+        elif choice == "3":
+            delete_habit(user_id)
             display_habits(user_id)
     
 """
