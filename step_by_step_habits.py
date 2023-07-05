@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from tabulate import tabulate
 
@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS habits (
     last_done DATETIME,
     streak INTEGER,
     status TEXT,
+    next_completion_time DATETIME,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
@@ -475,7 +476,7 @@ def last_done(habit_id):
     none
     """
     if status == "Done":
-        last_done_input = datetime.now()
+        last_done_input = datetime.now().strftime("%Y-%m-%d")
 
         insert_data = '''
         INSERT INTO habits (last_done, habit_id)
@@ -486,15 +487,17 @@ def last_done(habit_id):
     else:
         None
 
-def streak(habit_id, frequency):
+def streak(habit_id, frequency, status):
     """
-    Allows the user to track their streak
+    Calculates and updates the streak for a habit
 
     Parameters:
-    streak (int): The number of days the user has maintained their habit
+    habit_id (int): The ID of the habit
+    frequency (str): The frequency of the habit
+    status (str): The status of the habit
 
     Returns:
-    none
+    None
     """
     if status == "Done":
         time_limit = get_time_limit(frequency)
@@ -510,12 +513,19 @@ def streak(habit_id, frequency):
         else:
             streak = (datetime.now() - last_done).total_seconds() // time_limit
 
-        insert_data = '''
-        INSERT INTO habits (streak, habit_id)
-        VALUES (?, ?)
+        #insert_data = '''
+        #INSERT INTO habits (streak, habit_id)
+        #VALUES (?, ?)
+        #'''
+        #cursor.execute(insert_data, (streak, habit_id,))
+        #connection.commit()
+
+        update_data = '''
+        UPDATE habits SET streak = ? WHERE habit_id = ?
         '''
-        cursor.execute(insert_data, (streak, habit_id,))
+        cursor.execute(update_data, (streak, habit_id,))
         connection.commit()
+
     else:
         None
         
@@ -852,6 +862,292 @@ def statistics(user_id):
     None
     """
     print("What would you like to view statistics for?")
+    print("1. All habits with a specific habit type")
+    print("2. All habits with a specific frequency")
+    print("3. Longest run streak for all habits")
+    print("4. Longest run streak for a habit")
+    print("5. Exit")
+    choice = input("Enter your choice: ")
+
+    if choice == "1":
+        print("Select a habit type: ")
+        print("1. Health and Fitness")
+        print("2. Living and Organization")
+        print("3. Learning and Personal Development")
+        print("4. Relationships and Social Interactions")
+        print("5. Mental and Emotional Well-Being")
+        print("6. Environmental Sustainability")
+        print("7. Time Wasting")
+        print("8. Money Wasting")
+        print("9. Unhealthy")
+        print("10. Other")
+        choice = input("Enter your choice: ")
+
+        habit_type_mapping = {
+            "1": "Health and Fitness",
+            "2": "Living and Organization",
+            "3": "Learning and Personal Development",
+            "4": "Relationships and Social Interactions",
+            "5": "Mental and Emotional Well-Being",
+            "6": "Environmental Sustainability",
+            "7": "Time Wasting",
+            "8": "Money Wasting",
+            "9": "Unhealthy",
+            "10": "Other"
+        }
+
+        habit_type = habit_type_mapping[choice]
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ? AND habit_type = ?
+        '''
+        cursor.execute(select_query, (user_id, habit_type,))
+        habits = cursor.fetchall()
+
+        # Create a DataFrame from the habits data
+        columns = ["Name", "Start Date", "Frequency", "Habit Type", "Money Saved", 
+        "Time Saved", "Last Done", "Streak", "Status"]
+        habit_data = []
+        for habit in habits:
+            # Check for None values and substitute with an empty string or placeholder
+            habit_name = habit[2] if habit[2] is not None else ""
+            start_date = habit[3] if habit[3] is not None else ""
+            frequency = habit[4] if habit[4] is not None else ""
+            habit_type = habit[5] if habit[5] is not None else ""
+            money_saved = habit[6] if habit[6] is not None else ""
+            time_saved = habit[7] if habit[7] is not None else ""
+            last_done = habit[8] if habit[8] is not None else ""
+            streak = habit[9] if habit[9] is not None else ""
+            status = habit[10] if habit[10] is not None else ""
+
+            habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
+            habit[8], habit[9], habit[10]])
+
+        habit_df = pd.DataFrame(habit_data, columns=columns)
+
+        # Display the DataFrame as a formatted table
+        table = tabulate(habit_df, headers='keys', tablefmt='psql')
+        print(table)
+    elif choice == "2":
+        print("Select a frequency: ")
+        print("1. Daily")
+        print("2. Weekly")
+        print("3. Monthly")
+        print("4. Yearly")
+        choice = input("Enter your choice: ")
+
+        frequency_mapping = {
+            "1": "daily",
+            "2": "weekly",
+            "3": "monthly",
+            "4": "yearly"
+        }
+
+        frequency = frequency_mapping[choice]
+
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ? AND frequency = ?
+        '''
+        cursor.execute(select_query, (user_id, frequency,))
+        habits = cursor.fetchall()
+
+        # Create a DataFrame from the habits data
+        columns = ["Name", "Start Date", "Frequency", "Habit Type", "Money Saved",
+        "Time Saved", "Last Done", "Streak", "Status"]
+        habit_data = []
+        for habit in habits:
+            # Check for None values and substitute with an empty string or placeholder
+            habit_name = habit[2] if habit[2] is not None else ""
+            start_date = habit[3] if habit[3] is not None else ""
+            frequency = habit[4] if habit[4] is not None else ""
+            habit_type = habit[5] if habit[5] is not None else ""
+            money_saved = habit[6] if habit[6] is not None else ""
+            time_saved = habit[7] if habit[7] is not None else ""
+            last_done = habit[8] if habit[8] is not None else ""
+            streak = habit[9] if habit[9] is not None else ""
+            status = habit[10] if habit[10] is not None else ""
+
+            habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7],
+            habit[8], habit[9], habit[10]])
+
+        habit_df = pd.DataFrame(habit_data, columns=columns)
+
+        # Display the DataFrame as a formatted table
+        table = tabulate(habit_df, headers='keys', tablefmt='psql')
+        print(table)
+    elif choice == "3":
+        select_query = '''
+        SELECT habit_name, MAX(streak) as longest_streak 
+        FROM habits 
+        WHERE user_id = ?
+        GROUP BY habit_name
+        '''
+        cursor.execute(select_query, (user_id,))
+        longest_streaks = cursor.fetchall()
+
+        # Create a DataFrame from the habits data
+        columns = ["Name", "Longest Streak"]
+        streak_data = []
+        for streak in longest_streaks:
+            # Check for None values and substitute with an empty string or placeholder
+            habit_name = streak[0] if streak[0] is not None else ""
+            longest_streak = streak[1] if streak[1] is not None else ""
+
+            streak_data.append([streak[0], streak[1]])
+
+        streak_df = pd.DataFrame(streak_data, columns=columns)
+
+        # Display the DataFrame as a formatted table
+        table = tabulate(streak_df, headers='keys', tablefmt='psql')
+        print(table)
+    elif choice == "4":
+        select_query = '''
+        SELECT * FROM habits WHERE user_id = ?
+        '''
+        cursor.execute(select_query, (user_id,))
+        habits = cursor.fetchall()
+
+        for index, habit in enumerate(habits):
+            print(f"{index+1}. {habit[2]}")
+
+        habit_choice = int(input("Which habit would you like to view the longest streak for? "))
+        if habit_choice < 1 or habit_choice > len(habits):
+            print("Invalid habit choice.")
+        else:
+            selected_habit = habits[habit_choice-1]
+            habit_id = selected_habit[0]
+            habit_name = selected_habit[2]
+            frequency = selected_habit[4]
+            habit_type = selected_habit[5]
+            money_saved = selected_habit[6]
+            time_saved = selected_habit[7]
+            last_done = selected_habit[8]
+
+        select_query = '''
+        SELECT MAX(streak) FROM habits WHERE habit_id = ?
+        '''
+        cursor.execute(select_query, (habit_id,))
+        longest_streak = cursor.fetchone()[0]
+
+        print(f"The longest streak for {habit_name} is {longest_streak}!")
+    elif choice == "5":
+        exit()
+
+def calculate_streak(frequency, last_done):
+    if last_done is None:
+        return 0
+
+    current_date = datetime.now().date()
+    time_delta = current_date - last_done.date()
+
+    if frequency == "Daily":
+        return time_delta.days if time_delta.days <= 1 else 0
+    elif frequency == "Weekly":
+        return time_delta.days // 7 if time_delta.days <= 7 else 0
+    elif frequency == "Monthly":
+        return time_delta.days // 30 if time_delta.days <= 30 else 0
+    elif frequency == "Yearly":
+        return time_delta.days // 365 if time_delta.days <= 365 else 0
+    else:
+        return 0
+
+def calculate_next_completion_time(frequency):
+    """
+    Calculates the next completion time based on the frequency
+
+    Parameters:
+    frequency (str): The frequency of the habit
+
+    Returns:
+    datetime: The calculated next completion time
+    """
+    current_datetime = datetime.now()
+
+    if frequency == "Daily":
+        next_completion_time = current_datetime + timedelta(days=1)
+    elif frequency == "Weekly":
+        days_until_next_weekday = (7 - current_datetime.weekday()) % 7
+        next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
+    elif frequency == "Monthly":
+        next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
+        next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
+        next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1)
+    elif frequency == "Yearly":
+        next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1)
+    else:
+        raise ValueError("Invalid frequency")
+
+    next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+    return next_completion_time
+    
+def mark_habit_done(user_id):
+    """
+    Marks a habit as done for the current date
+
+    Parameters:
+    user_id (int): The ID of the user
+
+    Returns:
+    None
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE user_id = ?
+    '''
+    cursor.execute(select_query, (user_id,))
+    habits = cursor.fetchall()
+
+    # Display the habits to choose from
+    for index, habit in enumerate(habits):
+        print(f"{index+1}. {habit[2]}")
+
+    habit_choice = int(input("Which habit would you like to mark as done? "))
+    if habit_choice < 1 or habit_choice > len(habits):
+        print("Invalid habit choice.")
+    else:
+        selected_habit = habits[habit_choice-1]
+        habit_id = selected_habit[0]
+        habit_name = selected_habit[2]
+        frequency = selected_habit[4]
+
+        # Get the current date and time
+        current_datetime = datetime.now()
+
+        # Calculate the next allowed completion time based on frequency
+        if frequency == "Daily":
+            next_completion_time = current_datetime + timedelta(days=1)
+            next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+        elif frequency == "Weekly":
+            days_until_next_weekday = (7 - current_datetime.weekday()) % 7
+            next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
+            next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+        elif frequency == "Monthly":
+            next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
+            next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
+            next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
+                                                            hour=0, minute=1, second=0, microsecond=0)
+        elif frequency == "Yearly":
+            next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
+                                                            hour=0, minute=1, second=0, microsecond=0)
+        else:
+            print("Invalid frequency.")
+            return
+
+        # Update the last_done and streak fields in the habits table
+        update_query = '''
+        UPDATE habits SET last_done = ?, streak = streak + 1 WHERE habit_id = ?
+        '''
+        cursor.execute(update_query, (current_datetime, habit_id,))
+        connection.commit()
+
+        # Update the next_completion_time in the habits table
+        update_next_completion_query = '''
+        UPDATE habits SET next_completion_time = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_next_completion_query, (next_completion_time, habit_id,))
+        connection.commit()
+
+        print(f"Habit '{habit_name}' marked as done for {current_datetime}. "
+              f"Next completion time: {next_completion_time}.")
 
 def what_to_do_now (user_id):
     """
@@ -888,189 +1184,11 @@ def what_to_do_now (user_id):
         elif choice == "3":
             delete_habit(user_id)
             display_habits(user_id)
-    
-"""
-        elif choice == "2":
-            print("Which habit would you like to edit?")
-            for habit in habits:
-                print(habit[2])
-            habit_name_input = input("Enter the name of the habit: ")
-            print("What would you like to edit?")
-            print("1. Name")
-            print("2. Frequency")
-            print("3. Habit Type")
-            print("4. Money Saved")
-            print("5. Time Saved")
-            print("6. Exit")
-            choice = input("Enter your choice: ")
-
-            if choice == "1":
-                habit_name_input = habit_name()
-                print("Your habit has been updated!")
-                print("Here's a summary of your habit:")
-                print("Habit name:", habit_name_input)
-                print("Frequency:", frequency_input)
-                print("Habit type:", habit_type_input)
-
-                # Save the habit information into the table of habits
-                save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
-                time_saved_input, user_id)
-                
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            elif choice == "2":
-                frequency_input = frequency()
-                print("Your habit has been updated!")
-                print("Here's a summary of your habit:")
-                print("Habit name:", habit_name_input)
-                print("Frequency:", frequency_input)
-                print("Habit type:", habit_type_input)
-
-                # Save the habit information into the table of habits
-                save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
-                time_saved_input, user_id)
-                
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            elif choice == "3":
-                print("Are you looking to break or create a habit?")
-                print("1. Break a habit")
-                print("2. Create a habit")
-                choice = input("Enter your choice: ")
-                if choice == "1":
-    	            habit_type_input, money_saved_input, time_saved_input, user_id = break_habit()
-                elif choice == "2":
-                    habit_type_input, money_saved_input, time_saved_input, user_id = create_habit()
-                print("Your habit has been updated!")
-                print("Here's a summary of your habit:")
-                print("Habit name:", habit_name_input)
-                print("Frequency:", frequency_input)
-                print("Habit type:", habit_type_input)
-
-                # Save the habit information into the table of habits
-                save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-                time_saved_input, user_id)
-
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            elif choice == "4":
-                money_saved_input = input("How much money will you save? ")
-                print("Your habit has been updated!")
-                print("Here's a summary of your habit:")
-                print("Habit name:", habit_name_input)
-                print("Habit type:", habit_type_input)
-                print("Money saved:", money_saved_input)
-                print("Time saved:", time_saved_input)
-
-                # Save the habit information into the table of habits
-                save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-                time_saved_input, user_id)
-
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-
-            elif choice == "5":
-                time_saved_input = input("How much time will you save?(in minutes) ")
-                print("Your habit has been updated!")
-                print("Here's a summary of your habit:")
-                print("Habit name:", habit_name_input)
-                print("Habit type:", habit_type_input)
-                print("Money saved:", money_saved_input)
-                print("Time saved:", time_saved_input)
-
-                # Save the habit information into the table of habits
-                save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input,
-                time_saved_input, user_id)
-
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            
-            elif choice == "6":
-                exit()
-        elif choice == "3":
-            print("Which habit would you like to delete?")
-            for habit in habits:
-                print(habit[2])
-            habit_name_input = input("Enter the name of the habit: ")
-            delete_data = '''
-            DELETE FROM habits WHERE habit_name = ?
-            '''
-            cursor.execute(delete_data, (habit_name_input,))
-            connection.commit()
-            print("Your habit has been deleted!")
-            select_query = '''
-            SELECT * FROM habits WHERE user_id = ?
-            '''
-            cursor.execute(select_query, (user_id,))
-            habits = cursor.fetchall()
-            return habits
         elif choice == "4":
-            print("Which habit would you like to view statistics for?")
-            for habit in habits:
-                print(habit[2])
-            habit_name_input = input("Enter the name of the habit: ")
-            print("What statistics would you like to view?")
-            print("1. Streak")
-            print("2. Status")
-            print("3. Exit")
-            choice = input("Enter your choice: ")
-
-            if choice == "1":
-                print("Your streak is", streak, "days!")
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            elif choice == "2":
-                print("Your status is", status)
-                select_query = '''
-                SELECT * FROM habits WHERE user_id = ?
-                '''
-                cursor.execute(select_query, (user_id,))
-                habits = cursor.fetchall()
-                return habits
-            elif choice == "3":
-                exit()
+            statistics(user_id)
         elif choice == "5":
-            print("Which habit would you like to mark as done?")
-            for habit in habits:
-                print(habit[2])
-            habit_name_input = input("Enter the name of the habit: ")
-            print("Your habit has been marked as done!")
-            status_input = "Done"
-            insert_data = '''
-            INSERT INTO habits (status, habit_id)
-            VALUES (?, ?)
-            '''
-            cursor.execute(insert_data, (status_input, habit_id,))
-            connection.commit()
-            select_query = '''
-            SELECT * FROM habits WHERE user_id = ?
-            '''
-            cursor.execute(select_query, (user_id,))
-            habits = cursor.fetchall()
-            return habits
+            mark_habit_done(user_id)
+            display_habits(user_id)
         elif choice == "6":
-            exit()"""
+            exit()
+    
