@@ -24,7 +24,37 @@ CREATE TABLE IF NOT EXISTS habits (
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
-cursor.execute(create_table_habits)
+cursor.execute(create_table_habits)    
+
+def predefined_habits(user_id):
+    """
+    Gives the user 5 predefined habits to start off with
+
+    Parameters:
+    user_id (int): The ID of the user
+
+    Returns:
+    None
+    """
+    predefined_habits = [
+        {"habit_name": "Meditate", "frequency": "Daily", "habit_type": "Mental and Emotional Well-Being", "money_saved": None, "time_saved": None},
+        {"habit_name": "Clean Room", "frequency": "Weekly", "habit_type": "Living and Organization", "money_saved": None, "time_saved": None},
+        {"habit_name": "Stop eating takeout", "frequency": "Weekly", "habit_type": "Money Wasting", "money_saved": 30, "time_saved": None},
+        {"habit_name": "Recycle", "frequency": "Monthly", "habit_type": "Environmental Sustainability", "money_saved": None, "time_saved": None},
+        {"habit_name": "Go to the dentist", "frequency": "Yearly", "habit_type": "Health and Fitness", "money_saved": None, "time_saved": None}
+    ]
+
+    # Insert the predefined habits into the habits table
+    insert_data = '''
+    INSERT INTO habits (user_id, habit_name, frequency, habit_type, money_saved, time_saved, status, start_date, last_done, streak)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    '''
+
+    for habit in predefined_habits:
+        cursor.execute(insert_data, (user_id, habit["habit_name"], habit["frequency"], habit["habit_type"],
+                                     habit["money_saved"], habit["time_saved"], None, None, None, None))
+
+    connection.commit()
 
 def habit_name():
     """
@@ -149,9 +179,9 @@ def update_frequency(habit_id):
     print("Habit frequency has been updated successfully!")
     return frequency_input
 
-def break_habit():
+def overcome_habit():
     """
-    Allows the user to choose the type of habit they wish to brake
+    Allows the user to choose the type of habit they wish to overcome
 
     Parameters:
     habit_type (str): The name of the type for the habit
@@ -202,12 +232,13 @@ def break_habit():
             time_saved_input = input("How much time will you save?(in minutes) ")
         elif choice == "2":
             time_saved_input = None  # Set time_saved to None if the user chooses not to track it
+        
         return habit_type_input, money_saved_input, time_saved_input
 
     elif choice == "2":
-        return break_habit()
+        return overcome_habit()
 
-def update_break_habit(habit_id):
+def update_overcome_habit(habit_id):
     """
     Allows the user to update the type of a habit
 
@@ -384,150 +415,6 @@ def update_time_saved(habit_id):
 
     print("Time saved has been updated successfully!")
     return time_saved_input
-
-def status(habit_id):
-    """
-    Allows the user to choose the status of their habit
-
-    Parameters:
-    status (str): The status of the habit
-
-    Returns:
-    none
-    """
-    print("Select habit status:")
-    print("1. Done")
-    print("2. Not Done")
-    status_input = input("Enter your choice: ")
-
-    if status_input == "1":
-        status_input = "Done"
-    elif status_input == "2":
-        status_input = "Not Done"
-
-    print("Your status is", status_input, "is that correct?")
-    print("1. Yes")
-    print("2. No")
-
-    choice = input()
-    if choice == "1":
-        print("Perfect!")
-        insert_data = '''
-        INSERT INTO habits (status, habit_id)
-        VALUES (?, ?)
-        '''
-        cursor.execute(insert_data, (status_input, habit_id,))
-        connection.commit()
-
-    elif choice == "2":
-        status()
-
-def get_time_limit(frequency):
-    """
-    Retrieves the time limit for streak based on the frequency
-
-    Parameters:
-    frequency (str): The frequency of the habit ("daily", "weekly", etc.)
-
-    Returns:
-    time_limit (int): The time limit in seconds
-    """
-    if frequency == "daily":
-        return 24 * 60 * 60  # 24 hours in seconds
-    elif frequency == "weekly":
-        return 7 * 24 * 60 * 60  # 7 days in seconds
-    elif frequency == "monthly":
-        return 30 * 24 * 60 * 60 # 30 days in seconds
-    elif frequency == "yearly":
-        return 365 * 24 * 60 * 60 # 365 days in seconds
-    else:
-        return None
-
-def start_date(habit_id):
-    """
-    Allows the user to track their starting date as soon as they mark a habit as "done" for the first time
-
-    Parameters:
-    start_date (datetime): The date the user started the habit
-
-    Returns:
-    none
-    """
-    if status == "Done":
-        start_date_input = datetime.now()
-            
-        insert_data = '''
-        INSERT INTO habits (start_date, user_id)
-        VALUES (?, ?)
-        '''
-        cursor.execute(insert_data, (start_date_input, user_id,))
-        connection.commit()
-    else:
-        None
-
-def last_done(habit_id):
-    """
-    Allows the user to track the last time they marked a habit as "done"
-
-    Parameters:
-    last_done (datetime): The date the user last did the habit
-
-    Returns:
-    none
-    """
-    if status == "Done":
-        last_done_input = datetime.now().strftime("%Y-%m-%d")
-
-        insert_data = '''
-        INSERT INTO habits (last_done, habit_id)
-        VALUES (?, ?)
-        '''
-        cursor.execute(insert_data, (last_done_input, habit_id,))
-        connection.commit()
-    else:
-        None
-
-def streak(habit_id, frequency, status):
-    """
-    Calculates and updates the streak for a habit
-
-    Parameters:
-    habit_id (int): The ID of the habit
-    frequency (str): The frequency of the habit
-    status (str): The status of the habit
-
-    Returns:
-    None
-    """
-    if status == "Done":
-        time_limit = get_time_limit(frequency)
-
-        select_query = '''
-        SELECT last_done FROM habits WHERE habit_id = ?
-        '''
-        cursor.execute(select_query, (habit_id,))
-        last_done = cursor.fetchone()[0]
-
-        if last_done is None:
-            streak = 0
-        else:
-            streak = (datetime.now() - last_done).total_seconds() // time_limit
-
-        #insert_data = '''
-        #INSERT INTO habits (streak, habit_id)
-        #VALUES (?, ?)
-        #'''
-        #cursor.execute(insert_data, (streak, habit_id,))
-        #connection.commit()
-
-        update_data = '''
-        UPDATE habits SET streak = ? WHERE habit_id = ?
-        '''
-        cursor.execute(update_data, (streak, habit_id,))
-        connection.commit()
-
-    else:
-        None
         
 def save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
     """
@@ -608,12 +495,12 @@ def create_habits(user_id):
 
     habit_name_input = habit_name()
     frequency_input = frequency()
-    print("Are you looking to break or create a habit?")
-    print("1. Break a habit")
+    print("Are you looking to overcome or create a habit?")
+    print("1. Overcome a habit")
     print("2. Create a habit")
     choice = input("Enter your choice: ")
     if choice == "1":
-    	habit_type_input, money_saved_input, time_saved_input = break_habit()
+    	habit_type_input, money_saved_input, time_saved_input = overcome_habit()
     elif choice == "2":
         habit_type_input, money_saved_input, time_saved_input = create_habit()
 
@@ -716,12 +603,12 @@ def edit_habit(user_id):
         return habits
 
     elif choice == "3":
-        print("Are you looking to break or create a habit?")
-        print("1. Break a habit")
+        print("Are you looking to overcome or create a habit?")
+        print("1. Overcome a habit")
         print("2. Create a habit")
         choice = input("Enter your choice: ")
         if choice == "1":
-            habit_type_input = update_break_habit(habit_id)
+            habit_type_input = update_overcome_habit(habit_id)
         elif choice == "2":
             habit_type_input = update_create_habit(habit_id)
         print("Your habit has been updated!")
@@ -1033,34 +920,68 @@ def statistics(user_id):
     elif choice == "5":
         exit()
 
-def calculate_streak(frequency, last_done):
-    if last_done is None:
-        return 0
-
-    current_date = datetime.now().date()
-    time_delta = current_date - last_done.date()
-
-    if frequency == "Daily":
-        return time_delta.days if time_delta.days <= 1 else 0
-    elif frequency == "Weekly":
-        return time_delta.days // 7 if time_delta.days <= 7 else 0
-    elif frequency == "Monthly":
-        return time_delta.days // 30 if time_delta.days <= 30 else 0
-    elif frequency == "Yearly":
-        return time_delta.days // 365 if time_delta.days <= 365 else 0
-    else:
-        return 0
-
-def calculate_next_completion_time(frequency):
+def start_date(habit_id):
     """
-    Calculates the next completion time based on the frequency
+    Allows the user to track their starting date as soon as they mark a habit as "done" for the first time
 
     Parameters:
-    frequency (str): The frequency of the habit
+    start_date (datetime): The date the user started the habit
+
+    Returns:
+    none
+    """
+    if status == "Done":
+        start_date_input = datetime.now()
+            
+        insert_data = '''
+        INSERT INTO habits (start_date, user_id)
+        VALUES (?, ?)
+        '''
+        cursor.execute(insert_data, (start_date_input, user_id,))
+        connection.commit()
+    else:
+        None
+
+def last_done(habit_id):
+    """
+    Allows the user to track the last time they marked a habit as "done"
+
+    Parameters:
+    last_done (datetime): The date the user last did the habit
+
+    Returns:
+    none
+    """
+    if status == "Done":
+        last_done_input = datetime.now()
+
+        insert_data = '''
+        INSERT INTO habits (last_done, habit_id)
+        VALUES (?, ?)
+        '''
+        cursor.execute(insert_data, (last_done_input, habit_id,))
+        connection.commit()
+    else:
+        None
+
+def calculate_next_completion_time(habit_id):
+    """
+    Calculates the next allowed completion time based on the frequency of the habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
 
     Returns:
     datetime: The calculated next completion time
     """
+    select_query = '''
+    SELECT frequency FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    frequency = habit[0]
+
     current_datetime = datetime.now()
 
     if frequency == "Daily":
@@ -1071,15 +992,34 @@ def calculate_next_completion_time(frequency):
     elif frequency == "Monthly":
         next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
         next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
-        next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1)
+        next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
+                                                        hour=0, minute=1, second=0, microsecond=0)
     elif frequency == "Yearly":
-        next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1)
+        next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
+                                                        hour=0, minute=1, second=0, microsecond=0)
     else:
-        raise ValueError("Invalid frequency")
-
-    next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
-    return next_completion_time
+        print("Invalid frequency.")
+        return None
     
+    return next_completion_time
+
+def update_next_completion_time(habit_id, next_completion_time):
+    """
+    Updates the next completion time of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+    next_completion_time (datetime): The next completion time of the habit
+
+    Returns:
+    None
+    """
+    update_next_completion_query = '''
+    UPDATE habits SET next_completion_time = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_next_completion_query, (next_completion_time, habit_id,))
+    connection.commit()
+
 def mark_habit_done(user_id):
     """
     Marks a habit as done for the current date
@@ -1134,20 +1074,133 @@ def mark_habit_done(user_id):
 
         # Update the last_done and streak fields in the habits table
         update_query = '''
-        UPDATE habits SET last_done = ?, streak = streak + 1 WHERE habit_id = ?
+        UPDATE habits SET last_done = ? WHERE habit_id = ?
         '''
         cursor.execute(update_query, (current_datetime, habit_id,))
         connection.commit()
 
-        # Update the next_completion_time in the habits table
-        update_next_completion_query = '''
-        UPDATE habits SET next_completion_time = ? WHERE habit_id = ?
+        # Update the status of the habit to "Done"
+        update_status_query = '''
+        UPDATE habits SET status = ? WHERE habit_id = ?
         '''
-        cursor.execute(update_next_completion_query, (next_completion_time, habit_id,))
+        cursor.execute(update_status_query, ("Done", habit_id,))
         connection.commit()
+
+        next_completion_time = calculate_next_completion_time(habit_id)
+
+        # Update the next_completion_time of the habit
+        update_next_completion_time(habit_id, next_completion_time)
 
         print(f"Habit '{habit_name}' marked as done for {current_datetime}. "
               f"Next completion time: {next_completion_time}.")
+        
+        return habit_id
+
+def calculate_streak(habit_id):
+    """
+    Calculates the streak of a habit and updates it in the database
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    int: The streak of the habit
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    # Get the current status, last done, and streak of the habit
+    status = habit[10]
+    last_done = habit[8]
+    streak = habit[9]
+
+    # If the habit is done, calculate the streak
+    if status == "Done":
+        # Get the current date and time
+        current_datetime = datetime.now()
+
+        # Calculate the streak based on the last done date and time
+        if last_done is not None:
+            last_done_datetime = datetime.strptime(last_done, "%Y-%m-%d %H:%M:%S.%f")
+            next_completion_time = calculate_next_completion_time(habit_id)
+            if current_datetime <= next_completion_time:
+                if streak is not None:
+                    streak = streak + 1
+                else:
+                    streak = 1
+                print("You're on a streak!")
+            else:
+                streak = 0
+                print("You broke your streak!")
+
+            # Update the streak in the habits table
+            update_query = '''
+            UPDATE habits SET streak = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_query, (streak, habit_id,))
+            connection.commit()
+    else:
+        streak = 0
+
+        # Update the streak in the habits table
+        update_query = '''
+        UPDATE habits SET streak = ? WHERE habit_id = ?
+        '''
+        cursor.execute(update_query, (streak, habit_id,))
+        connection.commit()
+
+    return streak, habit_id
+
+def calculate_money_saved(habit_id):
+    """
+    Allows the user to see how much money they have saved by maintaining a streak
+
+    Parameters:
+    money_saved (int): The amount of money saved
+
+    Returns:
+    calculated_money_saved (int): The amount of money saved
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    money_saved = habit[6]
+    streak = habit[9]
+
+    if money_saved is not None:
+        calculated_money_saved = money_saved * streak
+    else:
+        money_saved = None
+
+def calculate_time_saved(habit_id):
+    """
+    Allows the user to see how much time they have saved by maintaining a streak
+
+    Parameters:
+    time_saved (int): The amount of time saved
+
+    Returns:
+    calculated_time_saved (int): The amount of time saved
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    time_saved = habit[7]
+    streak = habit[9]
+    
+    if time_saved is not None:
+        calculated_time_saved = time_saved * streak
+    else:
+        time_saved = None
 
 def what_to_do_now (user_id):
     """
@@ -1187,7 +1240,10 @@ def what_to_do_now (user_id):
         elif choice == "4":
             statistics(user_id)
         elif choice == "5":
-            mark_habit_done(user_id)
+            habit_id = mark_habit_done(user_id)
+            calculate_streak(habit_id)
+            calculate_money_saved(habit_id)
+            calculate_time_saved(habit_id)
             display_habits(user_id)
         elif choice == "6":
             exit()

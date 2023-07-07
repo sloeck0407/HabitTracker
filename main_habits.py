@@ -3,7 +3,7 @@ import pandas as pd
 from tabulate import tabulate
 import sqlite3
 from database_user_registration import register, login
-from step_by_step_habits import create_habits, display_habits, edit_habit, what_to_do_now
+from step_by_step_habits import predefined_habits, create_habits, display_habits, edit_habit, what_to_do_now
 
 connection = sqlite3.connect("habit_tracker.db")
 cursor = connection.cursor()
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS habits (
     last_done DATETIME,
     streak INTEGER,
     status TEXT,
+    next_completion_time DATETIME,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
@@ -54,18 +55,9 @@ while True:
             cursor.execute(select_query, (user_id,))
             habits = cursor.fetchall()
             if not habits:
-                print("You don't have any habits yet.")
-                print("1. Create a habit")
-                print("2. Exit")
-                choice = input("Enter your choice: ")
-
-                if choice == "1":
-                    create_habits(user_id)
-                    display_habits(user_id)  # Call the function to display habits
-                elif choice == "2":
-                    break
-                else:
-                    print("Invalid choice. Try again.")
+                print("Seems like you're new here! Let's get started. These are some predefined habits, you can edit them, delete them and create your own too.")
+                predefined_habits(user_id)  # Call the function to create predefined habits
+                display_habits(user_id)  # Call the function to display habits
             else:
                 display_habits(user_id) 
 
