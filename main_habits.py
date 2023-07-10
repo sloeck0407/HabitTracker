@@ -3,7 +3,7 @@ import pandas as pd
 from tabulate import tabulate
 import sqlite3
 from database_user_registration import register, login
-from step_by_step_habits import predefined_habits, create_habits, display_habits, edit_habit, what_to_do_now
+from step_by_step_habits import predefined_habits, create_habits, display_habits, edit_habit, update_habit_status, what_to_do_now
 
 connection = sqlite3.connect("habit_tracker.db")
 cursor = connection.cursor()
@@ -59,6 +59,7 @@ while True:
                 predefined_habits(user_id)  # Call the function to create predefined habits
                 display_habits(user_id)  # Call the function to display habits
             else:
+                update_habit_status(user_id)  # Call the function to update habit status
                 display_habits(user_id) 
 
         what_to_do_now(user_id)

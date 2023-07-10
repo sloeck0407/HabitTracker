@@ -815,6 +815,7 @@ def statistics(user_id):
         # Display the DataFrame as a formatted table
         table = tabulate(habit_df, headers='keys', tablefmt='psql')
         print(table)
+        
     elif choice == "2":
         print("Select a frequency: ")
         print("1. Daily")
@@ -985,18 +986,19 @@ def calculate_next_completion_time(habit_id):
     current_datetime = datetime.now()
 
     if frequency == "Daily":
-        next_completion_time = current_datetime + timedelta(days=1)
+        next_day = current_datetime.day + 1 if current_datetime.day < 31 else 1
+        next_completion_time = current_datetime.replace(day=next_day, hour=0, minute=0, second=1, microsecond=0)
     elif frequency == "Weekly":
         days_until_next_weekday = (7 - current_datetime.weekday()) % 7
-        next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
+        next_completion_time = current_datetime.replace(hour=0, minute=0, second=1, microsecond=0) + timedelta(days=days_until_next_weekday)
     elif frequency == "Monthly":
         next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
         next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
         next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
-                                                        hour=0, minute=1, second=0, microsecond=0)
+                                                        hour=0, minute=0, second=1, microsecond=0)
     elif frequency == "Yearly":
         next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
-                                                        hour=0, minute=1, second=0, microsecond=0)
+                                                        hour=0, minute=0, second=1, microsecond=0)
     else:
         print("Invalid frequency.")
         return None
@@ -1202,6 +1204,41 @@ def calculate_time_saved(habit_id):
     else:
         time_saved = None
 
+def update_habit_status(user_id):
+    """
+    Checks and updates the status of habits based on the next_completion_time
+
+    Parameters:
+    user_id (int): The ID of the user
+
+    Returns:
+    None
+    """
+    select_query = '''
+    SELECT * FROM habits WHERE user_id = ?
+    '''
+    cursor.execute(select_query, (user_id,))
+    habits = cursor.fetchall()
+
+    for habit in habits:
+        habit_id = habit[0]
+        habit_name = habit[2]
+        status = habit[10]
+        next_completion_time = habit[11]
+
+        # Get the current date and time
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # If the habit is done and the next_completion_time has passed, update the status to "Not Done"
+        if status == "Done" and current_datetime >= next_completion_time:
+            update_status_query = '''
+            UPDATE habits SET status = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_status_query, ("Not Done", habit_id,))
+            connection.commit()
+
+            print(f"Habit '{habit_name}' is now due!")
+    
 def what_to_do_now (user_id):
     """
     Allows the user to choose what to do next	
