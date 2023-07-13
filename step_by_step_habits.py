@@ -678,7 +678,7 @@ def edit_habit(user_id):
         return habits
             
     elif choice == "6":
-        exit()   
+        what_to_do_now(user_id)  
 
 def delete_habit(user_id):
     """
@@ -736,7 +736,7 @@ def delete_habit(user_id):
         return habits
 
     elif choice == "2":
-        exit()
+        what_to_do_now(user_id)
 
 def statistics(user_id):
     """
@@ -919,7 +919,7 @@ def statistics(user_id):
 
         print(f"The longest streak for {habit_name} is {longest_streak}!")
     elif choice == "5":
-        exit()
+        what_to_do_now(user_id)
 
 def start_date(habit_id):
     """
@@ -1050,53 +1050,59 @@ def mark_habit_done(user_id):
         habit_id = selected_habit[0]
         habit_name = selected_habit[2]
         frequency = selected_habit[4]
+        status = selected_habit[10]
 
         # Get the current date and time
         current_datetime = datetime.now()
 
-        # Calculate the next allowed completion time based on frequency
-        if frequency == "Daily":
-            next_completion_time = current_datetime + timedelta(days=1)
-            next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
-        elif frequency == "Weekly":
-            days_until_next_weekday = (7 - current_datetime.weekday()) % 7
-            next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
-            next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
-        elif frequency == "Monthly":
-            next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
-            next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
-            next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
-                                                            hour=0, minute=1, second=0, microsecond=0)
-        elif frequency == "Yearly":
-            next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
-                                                            hour=0, minute=1, second=0, microsecond=0)
+        if status is None or status == "Not Done":
+            # Calculate the next allowed completion time based on frequency
+            if frequency == "Daily":
+                next_completion_time = current_datetime + timedelta(days=1)
+                next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+            elif frequency == "Weekly":
+                days_until_next_weekday = (6 - current_datetime.weekday()) % 7
+                next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
+                next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+            elif frequency == "Monthly":
+                next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
+                next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
+                next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
+                                                                hour=0, minute=1, second=0, microsecond=0)
+            elif frequency == "Yearly":
+                next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
+                                                                hour=0, minute=1, second=0, microsecond=0)
+            else:
+                print("Invalid frequency.")
+                return
+
+            # Update the last_done and streak fields in the habits table
+            update_query = '''
+            UPDATE habits SET last_done = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_query, (current_datetime, habit_id,))
+            connection.commit()
+
+            # Update the status of the habit to "Done"
+            update_status_query = '''
+            UPDATE habits SET status = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_status_query, ("Done", habit_id,))
+            connection.commit()
+
+            next_completion_time = calculate_next_completion_time(habit_id)
+
+            # Update the next_completion_time of the habit
+            update_next_completion_time(habit_id, next_completion_time)
+
+            print(f"Habit '{habit_name}' marked as done for {current_datetime}. "
+                f"Next completion time: {next_completion_time}.")
+                
+            return habit_id
         else:
-            print("Invalid frequency.")
-            return
-
-        # Update the last_done and streak fields in the habits table
-        update_query = '''
-        UPDATE habits SET last_done = ? WHERE habit_id = ?
-        '''
-        cursor.execute(update_query, (current_datetime, habit_id,))
-        connection.commit()
-
-        # Update the status of the habit to "Done"
-        update_status_query = '''
-        UPDATE habits SET status = ? WHERE habit_id = ?
-        '''
-        cursor.execute(update_status_query, ("Done", habit_id,))
-        connection.commit()
-
-        next_completion_time = calculate_next_completion_time(habit_id)
-
-        # Update the next_completion_time of the habit
-        update_next_completion_time(habit_id, next_completion_time)
-
-        print(f"Habit '{habit_name}' marked as done for {current_datetime}. "
-              f"Next completion time: {next_completion_time}.")
-        
-        return habit_id
+            print("You've already marked this habit as done.")
+            display_habits(user_id)
+            what_to_do_now(user_id)
 
 def calculate_streak(habit_id):
     """
@@ -1225,6 +1231,7 @@ def update_habit_status(user_id):
         habit_name = habit[2]
         status = habit[10]
         next_completion_time = habit[11]
+        streak = habit[9]
 
         # Get the current date and time
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1238,6 +1245,18 @@ def update_habit_status(user_id):
             connection.commit()
 
             print(f"Habit '{habit_name}' is now due!")
+
+        elif status == "Not Done" and current_datetime >= next_completion_time:
+            update_status_query = '''
+            UPDATE habits SET status = ? AND streak = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_status_query, (None, None, habit_id,))
+            connection.commit()
+
+            print(f"You broke your streak for habit '{habit_name}'!")
+        
+        else:
+            None
     
 def what_to_do_now (user_id):
     """
