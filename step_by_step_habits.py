@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime, timedelta
 import pandas as pd
 from tabulate import tabulate
+import random
 
 # Connect to the SQLite database
 connection = sqlite3.connect("habit_tracker.db")
@@ -20,7 +21,8 @@ CREATE TABLE IF NOT EXISTS habits (
     last_done DATETIME,
     streak INTEGER,
     status TEXT,
-    next_completion_time DATETIME,
+    timer_reset DATETIME,
+    deadline DATETIME,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
@@ -965,7 +967,7 @@ def last_done(habit_id):
     else:
         None
 
-def calculate_next_completion_time(habit_id):
+def calculate_timer_reset(habit_id):
     """
     Calculates the next allowed completion time based on the frequency of the habit
 
@@ -986,40 +988,100 @@ def calculate_next_completion_time(habit_id):
     current_datetime = datetime.now()
 
     if frequency == "Daily":
-        next_day = current_datetime.day + 1 if current_datetime.day < 31 else 1
-        next_completion_time = current_datetime.replace(day=next_day, hour=0, minute=0, second=1, microsecond=0)
+        timer_reset = current_datetime.replace(hour=23, minute=59, second=59, microsecond=999)
     elif frequency == "Weekly":
-        days_until_next_weekday = (7 - current_datetime.weekday()) % 7
-        next_completion_time = current_datetime.replace(hour=0, minute=0, second=1, microsecond=0) + timedelta(days=days_until_next_weekday)
+        days_until_next_sunday = (6 - current_datetime.weekday()) % 7
+        next_sunday = current_datetime + timedelta(days=days_until_next_sunday)
+        timer_reset = next_sunday.replace(hour=23, minute=59, second=59, microsecond=999)
     elif frequency == "Monthly":
         next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
         next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
-        next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
-                                                        hour=0, minute=0, second=1, microsecond=0)
+        next_month_first_day = current_datetime.replace(year=next_year, month=next_month, day=1,
+                                                        hour=0, minute=0, second=0, microsecond=0)
+        timer_reset = next_month_first_day - timedelta(microseconds=1)
     elif frequency == "Yearly":
-        next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
-                                                        hour=0, minute=0, second=1, microsecond=0)
+        next_year_first_day = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
+                                                      hour=0, minute=0, second=0, microsecond=0)
+        timer_reset = next_year_first_day - timedelta(microseconds=1)
     else:
         print("Invalid frequency.")
         return None
     
-    return next_completion_time
+    return timer_reset
 
-def update_next_completion_time(habit_id, next_completion_time):
+def calculate_deadline(habit_id):
+    """
+    Calculates the deadline for the habit based on the frequency
+
+    Parameters:
+    habit_id (int): The ID of the habit
+
+    Returns:
+    deadline (datetime): The calculated deadline
+    """
+    select_query = '''
+    SELECT frequency FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    frequency = habit[0]
+
+    current_datetime = datetime.now()
+
+    if frequency == "Daily":
+        next_day = current_datetime.day + 1 if current_datetime.day < 31 else 1
+        deadline = current_datetime.replace(day=next_day, hour=23, minute=59, second=59, microsecond=999)
+    elif frequency == "Weekly":
+        days_until_next_sunday = (6 - current_datetime.weekday()) % 7
+        next_sunday = current_datetime + timedelta(days=days_until_next_sunday + 7)
+        deadline = next_sunday.replace(hour=23, minute=59, second=59, microsecond=999)
+    elif frequency == "Monthly":
+        next_month = current_datetime.month + 2 if current_datetime.month < 12 else 1
+        next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
+        next_month_first_day = current_datetime.replace(year=next_year, month=next_month, day=1,
+                                                        hour=0, minute=0, second=0, microsecond=0)
+        deadline = next_month_first_day - timedelta(microseconds=1)
+    elif frequency == "Yearly":
+        deadline = current_datetime.replace(year=current_datetime.year + 1, month=12, day=31,
+                                            hour=23, minute=59, second=59, microsecond=999)
+    else:
+        deadline = None
+
+    return deadline
+
+def update_timer_reset(habit_id, timer_reset):
     """
     Updates the next completion time of a habit
 
     Parameters:
     habit_id (int): The ID of the habit
-    next_completion_time (datetime): The next completion time of the habit
+    timer_reset (datetime): The next completion time of the habit
 
     Returns:
     None
     """
     update_next_completion_query = '''
-    UPDATE habits SET next_completion_time = ? WHERE habit_id = ?
+    UPDATE habits SET timer_reset = ? WHERE habit_id = ?
     '''
-    cursor.execute(update_next_completion_query, (next_completion_time, habit_id,))
+    cursor.execute(update_next_completion_query, (timer_reset, habit_id,))
+    connection.commit()
+
+def update_deadline(habit_id, deadline):
+    """
+    Updates the deadline of a habit
+
+    Parameters:
+    habit_id (int): The ID of the habit
+    deadline (datetime): The deadline of the habit
+
+    Returns:
+    None
+    """
+    update_deadline_query = '''
+    UPDATE habits SET deadline = ? WHERE habit_id = ?
+    '''
+    cursor.execute(update_deadline_query, (deadline, habit_id,))
     connection.commit()
 
 def mark_habit_done(user_id):
@@ -1045,6 +1107,7 @@ def mark_habit_done(user_id):
     habit_choice = int(input("Which habit would you like to mark as done? "))
     if habit_choice < 1 or habit_choice > len(habits):
         print("Invalid habit choice.")
+        what_to_do_now(user_id)
     else:
         selected_habit = habits[habit_choice-1]
         habit_id = selected_habit[0]
@@ -1058,19 +1121,19 @@ def mark_habit_done(user_id):
         if status is None or status == "Not Done":
             # Calculate the next allowed completion time based on frequency
             if frequency == "Daily":
-                next_completion_time = current_datetime + timedelta(days=1)
-                next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+                timer_reset = current_datetime + timedelta(days=1)
+                timer_reset = timer_reset.replace(hour=0, minute=1, second=0, microsecond=0)
             elif frequency == "Weekly":
                 days_until_next_weekday = (6 - current_datetime.weekday()) % 7
-                next_completion_time = current_datetime + timedelta(days=days_until_next_weekday)
-                next_completion_time = next_completion_time.replace(hour=0, minute=1, second=0, microsecond=0)
+                timer_reset = current_datetime + timedelta(days=days_until_next_weekday)
+                timer_reset = timer_reset.replace(hour=0, minute=1, second=0, microsecond=0)
             elif frequency == "Monthly":
                 next_month = current_datetime.month + 1 if current_datetime.month < 12 else 1
                 next_year = current_datetime.year if next_month > current_datetime.month else current_datetime.year + 1
-                next_completion_time = current_datetime.replace(year=next_year, month=next_month, day=1,
+                timer_reset = current_datetime.replace(year=next_year, month=next_month, day=1,
                                                                 hour=0, minute=1, second=0, microsecond=0)
             elif frequency == "Yearly":
-                next_completion_time = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
+                timer_reset = current_datetime.replace(year=current_datetime.year + 1, month=1, day=1,
                                                                 hour=0, minute=1, second=0, microsecond=0)
             else:
                 print("Invalid frequency.")
@@ -1090,17 +1153,20 @@ def mark_habit_done(user_id):
             cursor.execute(update_status_query, ("Done", habit_id,))
             connection.commit()
 
-            next_completion_time = calculate_next_completion_time(habit_id)
+            timer_reset = calculate_timer_reset(habit_id)
+            deadline = calculate_deadline(habit_id)
 
-            # Update the next_completion_time of the habit
-            update_next_completion_time(habit_id, next_completion_time)
+            # Update the timer_reset of the habit
+            update_timer_reset(habit_id, timer_reset)
+            update_deadline(habit_id, deadline)
 
-            print(f"Habit '{habit_name}' marked as done for {current_datetime}. "
-                f"Next completion time: {next_completion_time}.")
+            current_date = current_datetime.strftime("%Y-%m-%d")
+
+            print(f"Habit '{habit_name}' marked as done for {current_date}.")
                 
             return habit_id
         else:
-            print("You've already marked this habit as done.")
+            print("This habit isn't due yet!")
             display_habits(user_id)
             what_to_do_now(user_id)
 
@@ -1120,25 +1186,32 @@ def calculate_streak(habit_id):
     cursor.execute(select_query, (habit_id,))
     habit = cursor.fetchone()
 
-    # Get the current status, last done, and streak of the habit
-    status = habit[10]
+    # Get the current status, last done, and streak of the habit    status = habit[10]
     last_done = habit[8]
     streak = habit[9]
+    status = habit[10]
 
     # If the habit is done, calculate the streak
     if status == "Done":
         # Get the current date and time
         current_datetime = datetime.now()
+        current_date = current_datetime.strftime("%Y-%m-%d")
 
         # Calculate the streak based on the last done date and time
         if last_done is not None:
             last_done_datetime = datetime.strptime(last_done, "%Y-%m-%d %H:%M:%S.%f")
-            next_completion_time = calculate_next_completion_time(habit_id)
-            if current_datetime <= next_completion_time:
+            timer_reset = calculate_timer_reset(habit_id)
+            if current_datetime <= timer_reset:
                 if streak is not None:
                     streak = streak + 1
                 else:
                     streak = 1
+
+                    update_start_date_query = '''
+                    UPDATE habits SET start_date = ? WHERE habit_id = ?
+                    '''
+                    cursor.execute(update_start_date_query, (current_date, habit_id,))
+                    connection.commit()
                 print("You're on a streak!")
             else:
                 streak = 0
@@ -1210,9 +1283,70 @@ def calculate_time_saved(habit_id):
     else:
         time_saved = None
 
+def encouraging_message(habit_id):
+    """
+    Displays an encouraging message to the user after achieving a streak of 5 and in intervals of 5 after that
+
+    Parameters:
+    none
+
+    Returns:
+    none
+    """
+    encouraging_messages = [
+        "You can do it!",
+        "Keep going!",
+        "You're doing great!",
+        "Don't give up!",
+        "You're on a roll!",
+        "Congratulations on your streak! Keep up the great work!",
+        "Way to go! You're building a powerful habit.",
+        "You're on fire! Keep that momentum going.",
+        "You're unstoppable! Nothing can break your streak now.",
+        "Awesome job! Your dedication is inspiring.",
+        "You're making progress every day. Keep it up!",
+        "Keep going, you're on the right track!",
+        "You're proving that consistency is the key to success.",
+        "Keep showing up for yourself, and great things will happen.",
+        "You're doing it! Keep those positive habits going strong.",
+        "Your streak is a testament to your commitment and determination.",
+        "You're a streak superstar! Keep shining brightly.", 
+        "You're making positive changes, one day at a time.",
+        "You're forming habits that will change your life for the better.",
+        "You're building a foundation for success with each new day.",
+        "Each day you keep your streak alive, you're growing stronger.",
+        "Way to stick with it! Your progress is remarkable.",
+        "You're proving that small steps lead to big results.",
+        "Every day counts, and you're making the most of each one.",
+        "You're showing incredible discipline and focus. Keep it up!",
+        "Keep celebrating those wins. You're doing amazing!",
+        "You're proving that consistency pays off in a big way.",
+        "You're a streak master! Keep that streak alive and thriving.",
+        "You're turning your aspirations into accomplishments.",
+        "You're becoming the best version of yourself. Keep it up!",
+        "You've got this! One day at a time, you're achieving greatness."
+    ]
+
+    encouraging_message = random.choice(encouraging_messages)	
+    
+    select_query = '''
+    SELECT * FROM habits WHERE habit_id = ?
+    '''
+    cursor.execute(select_query, (habit_id,))
+    habit = cursor.fetchone()
+
+    streak = habit[9]
+
+    if streak == 5:
+        print(encouraging_message)
+    elif streak % 5 == 0:
+        print(encouraging_message)
+    else:
+        None
+
 def update_habit_status(user_id):
     """
-    Checks and updates the status of habits based on the next_completion_time
+    Checks and updates the status of habits based on the timer_reset and deadline
 
     Parameters:
     user_id (int): The ID of the user
@@ -1230,33 +1364,44 @@ def update_habit_status(user_id):
         habit_id = habit[0]
         habit_name = habit[2]
         status = habit[10]
-        next_completion_time = habit[11]
+        timer_reset = habit[11]
+        deadline = habit[12]
         streak = habit[9]
 
         # Get the current date and time
         current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # If the habit is done and the next_completion_time has passed, update the status to "Not Done"
-        if status == "Done" and current_datetime >= next_completion_time:
-            update_status_query = '''
-            UPDATE habits SET status = ? WHERE habit_id = ?
-            '''
-            cursor.execute(update_status_query, ("Not Done", habit_id,))
-            connection.commit()
-
-            print(f"Habit '{habit_name}' is now due!")
-
-        elif status == "Not Done" and current_datetime >= next_completion_time:
+        # Checks if the habit was done before the deadline, if not, the streak is reset and broken
+        if current_datetime >= deadline:
             update_status_query = '''
             UPDATE habits SET status = ? AND streak = ? WHERE habit_id = ?
             '''
-            cursor.execute(update_status_query, (None, None, habit_id,))
+            cursor.execute(update_status_query, (None, 0, habit_id,))
             connection.commit()
 
             print(f"You broke your streak for habit '{habit_name}'!")
-        
         else:
-            None
+            # If the habit is done and the timer_reset has passed, update the status to "Not Done"
+            if status == "Done" and current_datetime >= timer_reset:
+                update_status_query = '''
+                UPDATE habits SET status = ? WHERE habit_id = ?
+                '''
+                cursor.execute(update_status_query, ("Not Done", habit_id,))
+                connection.commit()
+
+                print(f"Habit '{habit_name}' is now due!")
+
+            elif status == "Not Done" and current_datetime >= timer_reset:
+                update_status_query = '''
+                UPDATE habits SET status = ? AND streak = ? WHERE habit_id = ?
+                '''
+                cursor.execute(update_status_query, (None, 0, habit_id,))
+                connection.commit()
+
+                print(f"You broke your streak for habit '{habit_name}'!")
+            
+            else:
+                None
     
 def what_to_do_now (user_id):
     """
@@ -1300,6 +1445,7 @@ def what_to_do_now (user_id):
             calculate_streak(habit_id)
             calculate_money_saved(habit_id)
             calculate_time_saved(habit_id)
+            encouraging_message(habit_id)
             display_habits(user_id)
         elif choice == "6":
             exit()

@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS habits (
     last_done DATETIME,
     streak INTEGER,
     status TEXT,
-    next_completion_time DATETIME,
+    timer_reset DATETIME,
+    deadline DATETIME,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
