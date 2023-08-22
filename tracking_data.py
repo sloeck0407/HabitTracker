@@ -36,7 +36,7 @@ def add_tracking_data(user_id, connection, cursor):
     # Add tracking data for test user 1
     insert_data = '''
     INSERT INTO habits (user_id, habit_name, creation_date, frequency, habit_type, money_saved, time_saved, last_done, streak, longest_streak, status, timer_reset, deadline, accumulated_money_saved, accumulated_time_saved)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     '''
     cursor.execute(insert_data, (user_id, "Meditate", datetime.datetime(2023, 7, 1), "Daily", "Mental and Emotional Well-Being", 0, 0, datetime.datetime(2023, 7, 23), 23, 23, 
     "Not Done", datetime.datetime(2023, 7, 24), datetime.datetime(2023, 7, 25), 0, 0))
