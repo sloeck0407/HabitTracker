@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS habits (
     status TEXT,
     timer_reset DATETIME,
     deadline DATETIME,
+    accumulated_money_saved INTEGER,
+    accumulated_time_saved INTEGER,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
@@ -423,24 +425,27 @@ def update_time_saved(habit_id):
     print("Time saved has been updated successfully!")
     return time_saved_input
         
-def save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
+def save_habit(habit_name_input, creation_date, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id):
     """
     Saves the habit information into the table of habits
 
     Parameters:
     habit_name_input (str): The name of the habit
+    creation_date (str): The date the habit was created
     frequency_input (str): The frequency of the habit
     habit_type_input (str): The type of the habit
+    money_saved_input (int): The amount of money saved by the habit
+    time_saved_input (int): The amount of time saved by the habit
 
     Returns:
     none
     """
     # Insert the habit into the habits table
     insert_data = '''
-    INSERT INTO habits (user_id, habit_name, frequency, habit_type, money_saved, time_saved, status, creation_date, last_done, streak)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO habits (user_id, habit_name, creation_date, frequency, habit_type, money_saved, time_saved, status, creation_date, last_done, streak)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     '''
-    cursor.execute(insert_data, (user_id, habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, None, None, None, None))
+    cursor.execute(insert_data, (user_id, habit_name_input, creation_date, frequency_input, habit_type_input, money_saved_input, time_saved_input, None, None, None, None))
     connection.commit()
 
 def display_habits(user_id):
@@ -469,14 +474,14 @@ def display_habits(user_id):
         creation_date = habit[3] if habit[3] is not None else ""
         frequency = habit[4] if habit[4] is not None else ""
         habit_type = habit[5] if habit[5] is not None else ""
-        money_saved = habit[6] if habit[6] is not None else ""
-        time_saved = habit[7] if habit[7] is not None else ""
+        accumulated_money_saved = habit[14] if habit[14] is not None else "0"
+        accumulated_time_saved = habit[15] if habit[15] is not None else "0"
         last_done = habit[8] if habit[8] is not None else ""
         streak = habit[9] if habit[9] is not None else ""
-        status = habit[11] if habit[11] is not None else ""  # Adjusted index for "Status"
+        status = habit[11] if habit[11] is not None else ""  
 
-        habit_data.append([habit_name, creation_date, frequency, habit_type, money_saved, 
-                           time_saved, last_done, streak, status])
+        habit_data.append([habit_name, creation_date, frequency, habit_type, accumulated_money_saved, 
+                           accumulated_time_saved, last_done, streak, status])
 
     habit_df = pd.DataFrame(habit_data, columns=columns)
 
@@ -511,6 +516,8 @@ def create_habits(user_id):
     elif choice == "2":
         habit_type_input, money_saved_input, time_saved_input = create_habit()
 
+    creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     print("Your habit has been created!")
     print("Here's a summary of your habit:")
     print("Habit name:", habit_name_input)
@@ -518,7 +525,7 @@ def create_habits(user_id):
     print("Habit type:", habit_type_input)
 
     # Save the habit information into the table of habits
-    save_habit(habit_name_input, frequency_input, habit_type_input, money_saved_input, 
+    save_habit(habit_name_input, creation_date, frequency_input, habit_type_input, money_saved_input, 
     time_saved_input, user_id)
 
     return habit_name_input, frequency_input, habit_type_input, money_saved_input, time_saved_input, user_id
@@ -813,13 +820,13 @@ def statistics(user_id, cursor):
                 creation_date = habit[3] if habit[3] is not None else ""
                 frequency = habit[4] if habit[4] is not None else ""
                 habit_type = habit[5] if habit[5] is not None else ""
-                money_saved = habit[6] if habit[6] is not None else ""
-                time_saved = habit[7] if habit[7] is not None else ""
+                accumulated_money_saved = habit[14] if habit[14] is not None else "0"
+                accumulated_time_saved = habit[15] if habit[15] is not None else "0"
                 last_done = habit[8] if habit[8] is not None else ""
                 streak = habit[9] if habit[9] is not None else ""
                 status = habit[11] if habit[11] is not None else ""
 
-                habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7], 
+                habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[14], habit[15], 
                 habit[8], habit[9], habit[11]])
 
         habit_df = pd.DataFrame(habit_data, columns=columns)
@@ -866,13 +873,13 @@ def statistics(user_id, cursor):
                 creation_date = habit[3] if habit[3] is not None else ""
                 frequency = habit[4] if habit[4] is not None else ""
                 habit_type = habit[5] if habit[5] is not None else ""
-                money_saved = habit[6] if habit[6] is not None else ""
-                time_saved = habit[7] if habit[7] is not None else ""
+                accumulated_money_saved = habit[14] if habit[14] is not None else "0"
+                accumulated_time_saved = habit[15] if habit[15] is not None else "0"
                 last_done = habit[8] if habit[8] is not None else ""
                 streak = habit[9] if habit[9] is not None else ""
                 status = habit[11] if habit[11] is not None else ""
 
-                habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[6], habit[7],
+                habit_data.append([habit[2], habit[3], habit[4], habit[5], habit[14], habit[15],
                 habit[8], habit[9], habit[11]])
 
         habit_df = pd.DataFrame(habit_data, columns=columns)
@@ -926,8 +933,8 @@ def statistics(user_id, cursor):
             habit_name = selected_habit[2]
             frequency = selected_habit[4]
             habit_type = selected_habit[5]
-            money_saved = selected_habit[6]
-            time_saved = selected_habit[7]
+            accumulated_money_saved = selected_habit[14]
+            accumulated_time_saved = selected_habit[15]
             last_done = selected_habit[8]
             streak = selected_habit[9]
             longest_streak = selected_habit[10]
@@ -1134,6 +1141,34 @@ def mark_habit_done(user_id):
         habit_name = selected_habit[2]
         frequency = selected_habit[4]
         status = selected_habit[11]
+        money_saved = selected_habit[6]
+        time_saved = selected_habit[7]
+        accumulated_money_saved = selected_habit[14]
+        accumulated_time_saved = selected_habit[15]
+
+        if money_saved is not None:
+            if accumulated_money_saved is None:
+                accumulated_money_saved = float(money_saved)
+            else:
+                accumulated_money_saved += float(money_saved)
+            
+            update_money_saved_query = '''
+            UPDATE habits SET accumulated_money_saved = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_money_saved_query, (accumulated_money_saved, habit_id,))
+            connection.commit()
+        
+        if time_saved is not None:
+            if accumulated_time_saved is None:
+                accumulated_time_saved = float(time_saved)
+            else:
+                accumulated_time_saved += float(time_saved)
+            
+            update_time_saved_query = '''
+            UPDATE habits SET accumulated_time_saved = ? WHERE habit_id = ?
+            '''
+            cursor.execute(update_time_saved_query, (accumulated_time_saved, habit_id,))
+            connection.commit()
 
         # Get the current date and time
         current_datetime = datetime.now()
@@ -1445,7 +1480,6 @@ def what_to_do_now (user_id):
 
         if choice == "1":
             create_habits(user_id)
-            creation_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             display_habits(user_id)
         elif choice == "2":
             edit_habit(user_id)
@@ -1455,6 +1489,7 @@ def what_to_do_now (user_id):
             display_habits(user_id)
         elif choice == "4":
             statistics(user_id, cursor)
+            display_habits(user_id)
         elif choice == "5":
             habit_id = mark_habit_done(user_id)
             calculate_streak(habit_id)

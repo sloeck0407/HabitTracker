@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS habits (
     status TEXT,
     timer_reset DATETIME,
     deadline DATETIME,
+    accumulated_money_saved INTEGER,
+    accumulated_time_saved INTEGER,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
 )
 '''
