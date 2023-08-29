@@ -1438,7 +1438,7 @@ def update_habit_status(user_id):
         if deadline and current_datetime >= deadline:
             cursor.execute('UPDATE habits SET status = ?, streak = ? WHERE habit_id = ?', (None, 0, habit_id,))
             connection.commit()
-            print(f"The streak for habit '{habit_name}' has reset.")
+            print(f"The streak for habit '{habit_name}' has been broken.")
 
         elif deadline and current_datetime < deadline:
             if status == "Done" and current_datetime >= timer_reset:
