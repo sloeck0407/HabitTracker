@@ -10,7 +10,8 @@ setup(
         'tabulate',
         'pytest',
         'unittest.mock',
-        'mock_open'
+        'mock_open',
+        're',
     ],  
     scripts=[
         'scripts/habit_tracker.py',

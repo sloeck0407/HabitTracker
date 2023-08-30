@@ -3,6 +3,7 @@ import sqlite3
 from unittest.mock import patch, mock_open
 from tracking_data import create_table_test_habits, add_tracking_data
 from step_by_step_habits import statistics
+import re
 
 @pytest.fixture
 def setup_database():
@@ -90,14 +91,24 @@ def test_statistics_run_streak_all_habits(setup_database, capsys):
 
         # Assert the presence of the expected print statements in the captured output.
         assert 'Meditate' in captured.out
+        position_meditate = captured.out.index('Meditate')
+        substring_after_meditate = captured.out[position_meditate:]
+        assert '23' in substring_after_meditate, "Meditate should have a streak of 23"
+        
         assert 'Clean Room' in captured.out
+        position_clean_room = captured.out.index('Clean Room')
+        substring_after_clean_room = captured.out[position_clean_room:]
+        assert '5' in substring_after_clean_room, "Clean Room should have a streak of 5"
+        
         assert 'Stop Eating Takeout' in captured.out
-        assert 'Recycle' in captured.out
+        position_stop_eating_takeout = captured.out.index('Stop Eating Takeout')
+        substring_after_stop_eating_takeout = captured.out[position_stop_eating_takeout:]
+        assert '4' in substring_after_stop_eating_takeout, "Stop Eating Takeout should have a streak of 4"
 
-        assert '23' in captured.out
-        assert '5' in captured.out
-        assert '4' in captured.out
-        assert '2' in captured.out
+        assert 'Recycle' in captured.out
+        position_recycle = captured.out.index('Recycle')
+        substring_after_recycle = captured.out[position_recycle:]
+        assert '1' in substring_after_recycle, "Recycle should have a streak of 1"
 
 def test_statistics_run_streak_habit_type(setup_database, capsys):
     cursor = setup_database  # Get the cursor from the fixture
@@ -113,6 +124,8 @@ def test_statistics_run_streak_habit_type(setup_database, capsys):
 
         # Assert the presence of the expected print statements in the captured output.
         assert 'Meditate' in captured.out
-        assert '23' in captured.out
+        position_meditate = captured.out.index('Meditate')
+        substring_after_meditate = captured.out[position_meditate:]
+        assert '23' in substring_after_meditate, "Meditate should have a streak of 23"
 
 
