@@ -32,7 +32,7 @@ pip install -e .
 ```
 Run the app
 ```bash
-python3 main_habits.py
+python3 main.py
 ```
 
 ### Downloading the zip
@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ```
 Run the app
 ```bash
-python3 main_habits.py
+python3 main.py
 ```
 
 ## Getting Started
