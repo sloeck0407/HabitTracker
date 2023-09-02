@@ -16,7 +16,7 @@ def main_menu(cursor, connection):
     print("Welcome to the Habit Tracker App!")
     print("1. Register")
     print("2. Login")
-    choice = input("Enter your choice: ")
+    choice = input("Enter a number: ")
 
     if choice == "1":
         user_id = register(cursor, connection, main_menu)
@@ -32,6 +32,7 @@ def main_menu(cursor, connection):
             post_login_menu(user_id, cursor)
     else:
         print("Invalid choice.")
+        return main_menu(cursor, connection)
 
 def post_login_menu(user_id, cursor):
     '''
@@ -53,7 +54,7 @@ def post_login_menu(user_id, cursor):
         print("5. Mark habit as done")
         print("6. Delete user account")
         print("7. Exit")    
-        choice = input("Enter your choice: ")
+        choice = input("Enter a number: ")
 
         if choice == "1":
             create_habits(user_id, cursor, connection)

@@ -7,10 +7,6 @@ An application designed to help users build and maintain their habits, track the
 * Streaks: Keep track of your streaks and see your longest streak
 * Data Analysis: See your habits by regularity or type, as well as your longest streak
 
-## Prerequisites
-- Python 3 or above
-- Pip (Python package manager)
-
 ## Installing
 
 ### Using Git
@@ -22,13 +18,17 @@ Navigate to the project directory
 ```bash
 cd HabitTracker
 ```
-Install the package and its dependencies (standard)
+Create virtual environment
 ```bash
-pip install .
+python3.10 -m venv myvenv
 ```
-Install the package and its dependencies (development)
+Activate virtual environment
 ```bash
-pip install -e .
+myvenv\Scripts\activate
+```
+Install the requirements
+```bash
+pip install -r requirements.txt
 ```
 Run the app
 ```bash
@@ -37,6 +37,14 @@ python3 main.py
 
 ### Downloading the zip
 Download the zip file from [here](https://github.com/sloeck0407/HabitTracker) and extract it.
+Create virtual environment
+```bash
+python3.10 -m venv myvenv
+```
+Activate virtual environment
+```bash
+myvenv\Scripts\activate
+```
 Install the requirements
 ```bash
 pip install -r requirements.txt

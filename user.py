@@ -64,6 +64,7 @@ def login(cursor, connection, main_menu):
         return user_id
     else:
         print("Invalid username/email or password")
+        main_menu(cursor, connection)
 
 def delete_user(user_id, cursor, connection):
     """
