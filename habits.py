@@ -455,6 +455,9 @@ def edit_habit(user_id, cursor, connection):
     elif edit_choice == "2":
         new_value = get_new_frequency()
         update_habit_field("frequency", new_value, habit_id, cursor)
+        timer_reset = calculate_timer_reset(cursor, habit_id)
+        deadline = calculate_deadline(cursor, habit_id)
+        update_timer_reset_and_deadline(cursor, habit_id, timer_reset, deadline)
     elif edit_choice == "3":
         new_value = get_new_habit_type()
         update_habit_field("habit_type", new_value, habit_id, cursor)
