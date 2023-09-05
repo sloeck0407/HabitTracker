@@ -18,11 +18,19 @@ Navigate to the project directory
 ```bash
 cd HabitTracker
 ```
-Create virtual environment
+### Create virtual environment on linux or macOS
 ```bash
 python3.10 -m venv myvenv
 ```
-Activate virtual environment
+### Or for Windows
+```bash
+py -m venv myvenv
+```
+### Activate virtual environment on linux or macOS
+```bash
+source myvenv/bin/activate
+```
+### Or for Windows
 ```bash
 myvenv\Scripts\activate
 ```
