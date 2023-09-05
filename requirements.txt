@@ -3,3 +3,4 @@ pandas
 tabulate
 pytest
 mock_open
+bcrypt

@@ -1,5 +1,6 @@
 from db import connect_to_db, create_user_table, insert_user, create_habits_table, insert_predefined_habits, fetch_habits, update_habit_field, delete_record
 from habits import predefined_habits, display_habits
+import bcrypt
 
 def register(cursor, connection, main_menu):
     """
@@ -15,7 +16,11 @@ def register(cursor, connection, main_menu):
     """
     username = input("Enter a username: ")
     email = input("Enter an email address: ")
-    password = input("Enter a password: ")
+    password = input("Enter a password: ").encode('utf-8')
+
+    # Hash the password
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password, salt)
 
     select_data = '''
     SELECT * FROM users WHERE username = ? OR email = ?
@@ -28,7 +33,7 @@ def register(cursor, connection, main_menu):
         print("Seems like you already have an account. Try logging in!")
         main_menu(cursor, connection)
     else:
-        insert_user(cursor, connection, username, email, password)
+        insert_user(cursor, connection, username, email, hashed_password.decode('utf-8'))
         user_id = cursor.lastrowid
         print("Registration successful!")
         create_habits_table(cursor)
@@ -49,7 +54,7 @@ def login(cursor, connection, main_menu):
     If the password is incorrect: "Invalid username/email or password"
     """
     login_input = input("Enter your username or email: ")
-    password = input("Enter your password: ")
+    password = input("Enter your password: ").encode('utf-8')
 
     # Retrieve user information from the table
     select_query = '''
@@ -58,14 +63,22 @@ def login(cursor, connection, main_menu):
     cursor.execute(select_query, (login_input, login_input))
     user = cursor.fetchone()
 
-    if user and user[3] == password:
-        print("Login successful!")
-        user_id = user[0]
-        return user_id
+    if user:
+        # Check if the password is correct
+        stored_password = user[3].encode('utf-8')
+
+        # Verify the password
+        if bcrypt.checkpw(password, stored_password):
+            print("Login successful!")
+            user_id = user[0]
+            return user_id
+        else:
+            print("Invalid username/email or password")
+            main_menu(cursor, connection)
     else:
         print("Invalid username/email or password")
         main_menu(cursor, connection)
-
+        
 def delete_user(user_id, cursor, connection):
     """
     Deletes a user and all their associated habits.

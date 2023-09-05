@@ -12,6 +12,7 @@ setup(
         'unittest.mock',
         'mock_open',
         're',
+        'bcrypt',
     ],  
     scripts=[
         'scripts/habit_tracker.py',
