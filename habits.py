@@ -926,6 +926,17 @@ def encouraging_message(user_id, habit_id, cursor):
         return
 
 def update_habit_status(user_id, cursor, connection):
+    """
+    Updates the status of the habit after logging in
+
+    Parameters:
+    user_id (int): The user's unique id
+    cursor (sqlite3.Cursor): The SQLite cursor
+    connection (sqlite3.Connection): The connection object to commit changes to the database
+
+    Returns:
+    None
+    """
     habits = fetch_habits(user_id, cursor)
 
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
